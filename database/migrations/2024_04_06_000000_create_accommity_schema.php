@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -52,6 +51,7 @@ return new class extends Migration
             $table->string('type_piece');
             $table->string('statut');
             $table->timestamp('date_soumission');
+            $table->string('motif_rejet')->nullable();
 
             $table->foreign('id_utilisateur')->references('id_utilisateur')->on('utilisateurs')->onDelete('cascade');
         });
@@ -94,6 +94,7 @@ return new class extends Migration
             $table->uuid('id_politique')->nullable();
             $table->string('titre');
             $table->text('description');
+            $table->text('photo_url');
             $table->string('type_logement');
             $table->string('adresse');
             $table->smallInteger('capacite');
@@ -116,6 +117,7 @@ return new class extends Migration
             $table->date('date_debut');
             $table->date('date_fin');
             $table->boolean('est_disponible');
+            $table->enum('type_blockage', ['Disponible', 'Bloque Reservation', 'Bloque Manuel']);
 
             $table->foreign('id_annonce')->references('id_annonce')->on('annonces')->onDelete('cascade');
         });
