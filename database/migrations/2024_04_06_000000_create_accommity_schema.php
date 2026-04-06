@@ -60,7 +60,6 @@ return new class extends Migration {
         Schema::create('administrateurs', function (Blueprint $table) {
             $table->uuid('id_admin')->primary();
             $table->uuid('id_utilisateur');
-            $table->string('role');
             $table->string('email')->unique();
             $table->string('mot_de_passe');
             $table->dateTime('derniere_connexion');
