@@ -33,7 +33,7 @@
     <!-- Section Annonces -->
     <div class="mb-8">
         <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">Suivi des Annonces</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
                 <span class="text-xs font-semibold text-slate-500 block uppercase tracking-wider">Total Annonces</span>
                 <span class="text-2xl font-bold text-slate-800">{{ $statsAnnonces['total'] }}</span>
@@ -50,13 +50,17 @@
                 <span class="text-xs font-semibold text-red-500 block uppercase tracking-wider">Suspendues</span>
                 <span class="text-2xl font-bold text-red-700">{{ $statsAnnonces['suspendues'] }}</span>
             </div>
+            <div class="bg-white rounded-xl shadow-sm border border-rose-100 p-6">
+                <span class="text-xs font-semibold text-rose-500 block uppercase tracking-wider">Rejetées</span>
+                <span class="text-2xl font-bold text-rose-700">{{ $statsAnnonces['rejetees'] }}</span>
+            </div>
         </div>
     </div>
 
     <!-- Section Reservations -->
     <div class="mb-8">
         <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">État des Réservations</h2>
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div class="bg-white rounded-xl shadow-sm border border-blue-100 p-5 text-center">
                 <span class="text-2xl font-bold text-blue-700 block">{{ $statsReservations['en_cours'] }}</span>
                 <span class="text-xs font-medium text-slate-500 uppercase">En cours</span>
@@ -76,6 +80,10 @@
             <div class="bg-white rounded-xl shadow-sm border border-red-100 p-5 text-center">
                 <span class="text-2xl font-bold text-red-600 block">{{ $statsReservations['refusees'] }}</span>
                 <span class="text-xs font-medium text-slate-500 uppercase">Refusées</span>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-300 p-5 text-center">
+                <span class="text-2xl font-bold text-slate-600 block">{{ $statsReservations['expirees'] }}</span>
+                <span class="text-xs font-medium text-slate-500 uppercase">Expirées</span>
             </div>
         </div>
     </div>
@@ -134,14 +142,10 @@
 
         <div>
             <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">Gestion des Litiges</h2>
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 grid grid-cols-3 gap-2 text-center divide-x divide-slate-100">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 grid grid-cols-2 gap-2 text-center divide-x divide-slate-100">
                 <div>
                     <span class="text-2xl font-bold text-blue-600 block">{{ $statsLitiges['en_cours'] }}</span>
                     <span class="text-xs font-medium text-slate-500 uppercase">En cours</span>
-                </div>
-                <div>
-                    <span class="text-2xl font-bold text-emerald-600 block">{{ $statsLitiges['resolus'] }}</span>
-                    <span class="text-xs font-medium text-slate-500 uppercase">Résolus</span>
                 </div>
                 <div>
                     <span class="text-2xl font-bold text-slate-700 block">{{ $statsLitiges['clotures'] }}</span>

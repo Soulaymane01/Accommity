@@ -23,6 +23,7 @@ class AdminDashboardController
             'publiees' => DB::table('annonces')->where('statut', 'Publié')->count(),
             'en_attente' => DB::table('annonces')->where('statut', 'En cours de vérification')->count(),
             'suspendues' => DB::table('annonces')->where('statut', 'Suspendu')->count(),
+            'rejetees' => DB::table('annonces')->where('statut', 'rejeté')->count(),
         ];
 
         // 3. RESERVATIONS
@@ -32,6 +33,7 @@ class AdminDashboardController
             'terminees' => DB::table('reservations')->where('statut', 'Terminée')->count(),
             'annulees' => DB::table('reservations')->where('statut', 'Annulée')->count(),
             'refusees' => DB::table('reservations')->where('statut', 'Refusée')->count(),
+            'expirees' => DB::table('reservations')->where('statut', 'Expirée')->count(),
         ];
 
         // 4. TRANSACTIONS (Paiements, Versements, Remboursements)
@@ -53,7 +55,6 @@ class AdminDashboardController
 
         // 6. LITIGES
         $statsLitiges = [
-            'resolus' => DB::table('ticket_litiges')->where('statut', 'Résolu')->count(),
             'en_cours' => DB::table('ticket_litiges')->where('statut', 'En cours')->count(),
             'clotures' => DB::table('ticket_litiges')->where('statut', 'Clôturé')->count(),
         ];
