@@ -1,7 +1,3 @@
-# attribute and classe for our diagramme de classe:
-
-```
-
 @startuml DiagrammeClassesGeneral
 title Diagramme de Classes Général — Plateforme de Gestion d'Hébergements
 
@@ -34,6 +30,7 @@ package "PK_Utilisateurs" {
         --
         + verifierEmailUnique(email : String) : Boolean
         + creerCompte() : void
+        + redirigerVers(): void
         + getRoleUtilisateur() : String
         + getStatutVerification() : String
         + listerEvaluations() : List<Evaluation>
@@ -67,6 +64,7 @@ package "PK_Utilisateurs" {
     class VerificationIdentite {
         + id_verification : UUID
         + type_piece : String
+        + chemin_document: String
         + statut : String
         + date_soumission : Timestamp
         + motif_rejet : String
@@ -86,10 +84,9 @@ package "PK_Administration" {
 
     class Administrateur {
         + id_admin : UUID
+        + email : String
+        - motDePasse : String
         + derniere_connexion : Datetime
-        --
-        + getLitiges() : List<TicketLitige>
-        + traiterLitige(ticket : TicketLitige) : void
     }
 }
 
@@ -274,8 +271,6 @@ package "PK_Paiements" {
         + date_remboursement : Timestamp
         + motif : MotifRemboursement
         --
-        + effectuerRemboursement(reservation : Reservation) : void
-        + remboursementIntegral(reservation : Reservation) : void
         + getRemboursementsParVoyageur(voyageur : Utilisateur) : List<Remboursement>
         + filtrerRemboursements(statut : String) : List<Remboursement>
     }
@@ -449,4 +444,3 @@ Reservation "1" --> "0..*" Evaluation    : est à l'origine de >
 Administrateur "1" --> "0..*" TicketLitige : traite >
 
 @enduml
-```

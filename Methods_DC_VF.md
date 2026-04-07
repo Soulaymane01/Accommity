@@ -166,9 +166,7 @@ package "PK_Paiements" {
 
     class Remboursement {
 
-        + remboursement(idReservation) : void
-        + remboursementIntegral(idReservation) : void
-        + getRemboursements(idVoyageur) : list
+        + getRemboursementsParVoyageur(idVoyageur) : list
         + filtrerRemboursements(statut) : list
     }
 
