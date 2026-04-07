@@ -1,4 +1,4 @@
-# title les methodes du Diagramme de Classes Général — Plateforme de Gestion d'Hébergements
+# les methodes du Diagramme de Classes Général — Plateforme de Gestion d'Hébergements
 
 ```
 ' ══════════════════════════════════════════

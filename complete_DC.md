@@ -1,3 +1,6 @@
+# the complete class diagram
+
+```
 @startuml DiagrammeClassesGeneral
 title Diagramme de Classes Général — Plateforme de Gestion d'Hébergements
 
@@ -444,3 +447,4 @@ Reservation "1" --> "0..*" Evaluation    : est à l'origine de >
 Administrateur "1" --> "0..*" TicketLitige : traite >
 
 @enduml
+```
