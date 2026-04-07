@@ -13,6 +13,10 @@ class VerificationIdentite extends Model
     protected $keyType = 'string';
     public $timestamps = false;
 
+    protected $casts = [
+        'statut' => \App\Enums\VerificationStatut::class,
+    ];
+
     protected $fillable = [
         'id_verification',
         'id_utilisateur',
@@ -44,7 +48,7 @@ class VerificationIdentite extends Model
             'id_utilisateur' => $idUtilisateur,
             'type_piece' => $typePiece,
             'chemin_document' => $cheminDocument,
-            'statut' => 'En cours de traitement',
+            'statut' => \App\Enums\VerificationStatut::EN_COURS,
             'date_soumission' => now(),
         ]);
     }
@@ -72,7 +76,7 @@ class VerificationIdentite extends Model
      */
     public function validerVerification(): void
     {
-        $this->statut = 'Validé';
+        $this->statut = \App\Enums\VerificationStatut::VALIDE;
         $this->enregistrerDossier();
     }
 
@@ -81,7 +85,7 @@ class VerificationIdentite extends Model
      */
     public function rejeterVerification(string $motif): void
     {
-        $this->statut = 'Rejeté';
+        $this->statut = \App\Enums\VerificationStatut::REJETE;
         $this->motif_rejet = $motif;
         $this->enregistrerDossier();
     }

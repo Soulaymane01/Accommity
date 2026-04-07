@@ -35,16 +35,30 @@ class AuthController
             $request->session()->regenerate();
 
             $user = Auth::user();
+            
             if ($user->est_hote) {
                 $status = $user->getStatutVerification();
-                if ($status === 'En cours de traitement') {
-                    // Prevent entering the app and redirect to home with notice
+                
+                if ($status === \App\Enums\VerificationStatut::EN_COURS) {
                     Auth::logout();
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
-                    return redirect()->route('home')->with('success_dialog', 'Votre identité est toujours en cours de traitement par un administrateur.');
+                    return redirect('/')->with('success_dialog', 'Votre identité est toujours en cours de traitement par un administrateur.');
                 }
                 
+                if ($status === \App\Enums\VerificationStatut::REJETE) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                    return redirect('/')->with('error_dialog', 'Votre compte est rejeté. Veuillez recréer un nouveau compte et essayer de donner une carte d\'identité valide.');
+                }
+
+                // If Validé (Valid, Approuvé, Validé)
+                if ($status === \App\Enums\VerificationStatut::VALIDE) {
+                    return redirect()->intended(route('dashboard'));
+                }
+
+                // Only other case is if they skipped document submission
                 return redirect()->intended(route('verification.notice'));
             }
 
@@ -174,6 +188,29 @@ class AuthController
 
     public function dashboard()
     {
-        return view('dashboard');
+        $user = Auth::user();
+
+        if ($user->getRoleUtilisateur() === 'hote') {
+            $status = $user->getStatutVerification();
+            
+            if ($status === \App\Enums\VerificationStatut::EN_COURS) {
+                Auth::logout();
+                return redirect('/')->with('success_dialog', 'Votre identité est toujours en cours de traitement par un administrateur.');
+            }
+
+            if ($status === \App\Enums\VerificationStatut::REJETE) {
+                Auth::logout();
+                return redirect('/')->with('error_dialog', 'Votre compte est rejeté. Veuillez recréer un nouveau compte et essayer de donner une carte d\'identité valide.');
+            }
+
+            // Any other invalid state (like null)
+            if ($status !== \App\Enums\VerificationStatut::VALIDE) {
+                return redirect()->route('verification.notice');
+            }
+
+            return view('hote.dashboard');
+        }
+
+        return view('voyageur.dashboard');
     }
 }

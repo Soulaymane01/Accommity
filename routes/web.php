@@ -25,3 +25,36 @@ Route::middleware('auth')->group(function () {
     Route::get('/verification-identite', [AuthController::class, 'verificationNotice'])->name('verification.notice');
     Route::post('/verification-identite', [AuthController::class, 'submitVerification'])->name('verification.submit');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Espace Administration
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin')->name('admin.')->group(function () {
+    // Routes publiques (Authentification)
+    Route::get('/login', [\App\Http\Controllers\Admin\AdminAuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [\App\Http\Controllers\Admin\AdminAuthController::class, 'login'])->name('login.submit');
+
+    // Routes protégées par middleware (Guard admin)
+    Route::middleware('auth:admin')->group(function () {
+        Route::post('/logout', [\App\Http\Controllers\Admin\AdminAuthController::class, 'logout'])->name('logout');
+        
+        // Dashboard Stats
+        Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'index'])->name('dashboard');
+
+        // Emplacements vides (Views placeholders)
+        Route::view('/utilisateurs', 'admin.utilisateurs.index')->name('utilisateurs.index');
+        Route::view('/annonces', 'admin.annonces.index')->name('annonces.index');
+        Route::view('/reservations', 'admin.reservations.index')->name('reservations.index');
+        Route::view('/avis-signales', 'admin.avis_signales.index')->name('avis_signales.index');
+        Route::view('/litiges', 'admin.litiges.index')->name('litiges.index');
+        
+        // Transactions
+        Route::prefix('transactions')->name('transactions.')->group(function () {
+            Route::view('/paiements', 'admin.transactions.paiements')->name('paiements');
+            Route::view('/versements', 'admin.transactions.versements')->name('versements');
+            Route::view('/remboursements', 'admin.transactions.remboursements')->name('remboursements');
+        });
+    });
+});
