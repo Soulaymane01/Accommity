@@ -89,12 +89,12 @@ class User extends Authenticatable
 
     /**
      * Obtient le statut de vérification si hôte (simulate for now as relation)
-     * @return string
+     * @return \App\Enums\VerificationStatut|null
      */
-    public function getStatutVerification(): string
+    public function getStatutVerification(): ?\App\Enums\VerificationStatut
     {
         $verification = VerificationIdentite::where('id_utilisateur', $this->id_utilisateur)->latest('date_soumission')->first();
-        return $verification ? $verification->statut : 'non_soumis';
+        return $verification ? $verification->statut : null;
     }
 
     // Note: listerEvaluations(), getUtilisateurById(), updateUser(), deleteUser() 

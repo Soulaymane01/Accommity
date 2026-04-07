@@ -39,14 +39,14 @@ class AuthController
             if ($user->est_hote) {
                 $status = $user->getStatutVerification();
                 
-                if ($status === 'En cours de traitement') {
+                if ($status === \App\Enums\VerificationStatut::EN_COURS) {
                     Auth::logout();
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
                     return redirect('/')->with('success_dialog', 'Votre identité est toujours en cours de traitement par un administrateur.');
                 }
                 
-                if ($status === 'rejeté') {
+                if ($status === \App\Enums\VerificationStatut::REJETE) {
                     Auth::logout();
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
@@ -54,7 +54,7 @@ class AuthController
                 }
 
                 // If Validé (Valid, Approuvé, Validé)
-                if ($status === 'Validé' || $status === 'Approuvé' || $status === 'Valide') {
+                if ($status === \App\Enums\VerificationStatut::VALIDE) {
                     return redirect()->intended(route('dashboard'));
                 }
 
@@ -193,22 +193,22 @@ class AuthController
         if ($user->getRoleUtilisateur() === 'hote') {
             $status = $user->getStatutVerification();
             
-            if ($status === 'En cours de traitement') {
+            if ($status === \App\Enums\VerificationStatut::EN_COURS) {
                 Auth::logout();
                 return redirect('/')->with('success_dialog', 'Votre identité est toujours en cours de traitement par un administrateur.');
             }
 
-            if ($status === 'rejeté') {
+            if ($status === \App\Enums\VerificationStatut::REJETE) {
                 Auth::logout();
                 return redirect('/')->with('error_dialog', 'Votre compte est rejeté. Veuillez recréer un nouveau compte et essayer de donner une carte d\'identité valide.');
             }
 
-            // Any other invalid state
-            if ($status !== 'Validé' && $status !== 'Approuvé' && $status !== 'Valide') {
+            // Any other invalid state (like null)
+            if ($status !== \App\Enums\VerificationStatut::VALIDE) {
                 return redirect()->route('verification.notice');
             }
 
-            return view('hote.dashboard', compact('status'));
+            return view('hote.dashboard');
         }
 
         return view('voyageur.dashboard');
