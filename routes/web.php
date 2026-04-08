@@ -58,6 +58,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/hote/reservations', [\App\Http\Controllers\Reservations\ReservationController::class, 'demandes'])->name('hote.reservations.demandes');
     Route::post('/hote/reservations/{id}/accept', [\App\Http\Controllers\Reservations\ReservationController::class, 'accept'])->name('hote.reservations.accept');
     Route::post('/hote/reservations/{id}/refuse', [\App\Http\Controllers\Reservations\ReservationController::class, 'refuse'])->name('hote.reservations.refuse');
+    // Notifications
+    Route::get('/notifications', [\App\Http\Controllers\Notifications\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{notification}/read', [\App\Http\Controllers\Notifications\NotificationController::class, 'markAsRead'])->name('notifications.read');
 });
 
 // Public Annonces
