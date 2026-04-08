@@ -22,7 +22,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/register/photo', [AuthController::class, 'uploadPhoto'])->name('register.photo.submit');
 
     Route::get('/dashboard', function() {
-        if (auth()->user()->est_hote) {
+        if (auth()->user()->getRoleUtilisateur() === 'hote') {
             return redirect()->route('hote.annonces.index');
         }
         return redirect()->route('voyageur.dashboard');
