@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Controllers\Evaluations\EvaluationController;
+use App\Http\Controllers\Admin\AdminEvaluationController;
+use App\Http\Controllers\Admin\AdminLitigeController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -24,6 +27,26 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
     Route::get('/verification-identite', [AuthController::class, 'verificationNotice'])->name('verification.notice');
     Route::post('/verification-identite', [AuthController::class, 'submitVerification'])->name('verification.submit');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Évaluations — PK_Evaluations (RG27, RG28, RG30, RO10, RO11, RO12)
+    |--------------------------------------------------------------------------
+    */
+    // Liste des évaluations reçues
+    Route::get('/mes-evaluations', [EvaluationController::class, 'index'])->name('mes-evaluations');
+
+    // Créer une évaluation pour une réservation terminée
+    Route::get('/reservations/{reservation}/evaluation/create', [EvaluationController::class, 'create'])->name('evaluations.create');
+    Route::post('/reservations/{reservation}/evaluation', [EvaluationController::class, 'store'])->name('evaluations.store');
+
+    // Modifier / Supprimer un avis (RO12)
+    Route::get('/evaluations/{evaluation}/edit', [EvaluationController::class, 'edit'])->name('evaluations.edit');
+    Route::put('/evaluations/{evaluation}', [EvaluationController::class, 'update'])->name('evaluations.update');
+    Route::delete('/evaluations/{evaluation}', [EvaluationController::class, 'destroy'])->name('evaluations.destroy');
+
+    // Signaler un avis (RO10)
+    Route::post('/evaluations/{evaluation}/signaler', [EvaluationController::class, 'signaler'])->name('evaluations.signaler');
 });
 
 /*
@@ -47,8 +70,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::view('/utilisateurs', 'admin.utilisateurs.index')->name('utilisateurs.index');
         Route::view('/annonces', 'admin.annonces.index')->name('annonces.index');
         Route::view('/reservations', 'admin.reservations.index')->name('reservations.index');
-        Route::view('/avis-signales', 'admin.avis_signales.index')->name('avis_signales.index');
-        Route::view('/litiges', 'admin.litiges.index')->name('litiges.index');
+        
+        // Avis signalés — Contrôleur dédié (RG31)
+        Route::get('/avis-signales', [AdminEvaluationController::class, 'indexSignales'])->name('avis_signales.index');
+        Route::delete('/evaluations/{evaluation}', [AdminEvaluationController::class, 'supprimerAvis'])->name('evaluations.supprimer');
+        Route::post('/evaluations/{evaluation}/conserver', [AdminEvaluationController::class, 'conserverAvis'])->name('evaluations.conserver');
+
+        // Litiges — Contrôleur dédié (RO10)
+        Route::get('/litiges', [AdminLitigeController::class, 'index'])->name('litiges.index');
+        Route::get('/litiges/{ticket}', [AdminLitigeController::class, 'show'])->name('litiges.show');
+        Route::put('/litiges/{ticket}', [AdminLitigeController::class, 'modifierStatut'])->name('litiges.update');
         
         // Transactions
         Route::prefix('transactions')->name('transactions.')->group(function () {
