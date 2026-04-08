@@ -133,22 +133,71 @@ class ReservationService
     public function refuserDemande(string $idReservation, ?string $motif = null): void
     {
         $reservation = $this->repository->findById($idReservation);
+        $reservation->update(['motif_refus' => $motif]);
         $this->statutService->appliquerTransition($reservation, \App\Enums\StatutReservation::REFUSEE);
         $this->minuterieService->annulerMinuterie($idReservation);
-        // Dispatch Notification here or handled by Event
     }
 
     public function annulerReservation(string $idReservation, TypeActeurAnnulation $acteur): void
     {
         $reservation = $this->repository->findById($idReservation);
         
-        // PK_PAIEMENTS STUB: Remboursement logic here
+        // 1. Verifier si l'annulation est encore possible
+        if (in_array($reservation->statut, [\App\Enums\StatutReservation::TERMINEE, \App\Enums\StatutReservation::REFUSEE, \App\Enums\StatutReservation::ANNULEE])) {
+            throw new Exception("Cette réservation ne peut plus être annulée.");
+        }
 
+        // 2. Traitement des remboursements (PK_PAIEMENTS STUB)
+        $apercu = $this->calculerApercuAnnulation($idReservation);
+        
+        // 3. Mise à jour du statut
         $this->statutService->appliquerTransition($reservation, \App\Enums\StatutReservation::ANNULEE);
         $reservation->update(['acteur_annulation' => $acteur]);
         $this->minuterieService->annulerMinuterie($idReservation);
         
+        // 4. Débloquer le calendrier (PK_ANNONCES Integration)
+        // La recherche exclut déjà les 'Annulée', donc c'est automatique.
+        
         event(new ReservationAnnulee($reservation));
+    }
+
+    public function calculerApercuAnnulation(string $idReservation): array
+    {
+        $reservation = $this->repository->findById($idReservation);
+        $politique = $reservation->politique;
+
+        if (!$politique || $reservation->statut === \App\Enums\StatutReservation::EN_ATTENTE) {
+            return [
+                'montant_total' => $reservation->montant_total,
+                'montant_remboursement' => $reservation->montant_total,
+                'pourcentage' => 100,
+                'message' => "Annulation gratuite pour les demandes en attente."
+            ];
+        }
+
+        $now = now();
+        $arrivee = \Carbon\Carbon::parse($reservation->date_arrivee);
+        $joursAvant = $now->diffInDays($arrivee, false);
+
+        $taux = 0;
+        $message = "Aucun remboursement possible selon la politique de l'hôte.";
+
+        if ($joursAvant >= $politique->delai_remb_total) {
+            $taux = 100;
+            $message = "Remboursement intégral autorisé.";
+        } elseif ($joursAvant >= $politique->delai_remb_partiel) {
+            $taux = (float)$politique->taux_remb_partiel;
+            $message = "Remboursement partiel de {$taux}% autorisé.";
+        }
+
+        $rembourse = ($reservation->montant_total * $taux) / 100;
+
+        return [
+            'montant_total' => (float)$reservation->montant_total,
+            'montant_remboursement' => (float)$rembourse,
+            'pourcentage' => $taux,
+            'message' => $message
+        ];
     }
 
     public function setStatutEnCours(string $idReservation): void

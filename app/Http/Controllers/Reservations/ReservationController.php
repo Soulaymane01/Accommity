@@ -103,6 +103,16 @@ class ReservationController
         }
     }
 
+    public function apercuAnnulation($id)
+    {
+        $reservation = $this->repository->findById($id);
+        $this->authorize('cancel', $reservation);
+
+        $details = $this->reservationService->calculerApercuAnnulation($id);
+
+        return view('voyageur.reservations.cancel_preview', compact('reservation', 'details'));
+    }
+
     public function cancel(Request $request, $id)
     {
         $reservation = $this->repository->findById($id);
@@ -115,6 +125,11 @@ class ReservationController
                  
         try {
             $this->reservationService->annulerReservation($id, $acteur);
+            
+            if ($acteur === TypeActeurAnnulation::VOYAGEUR) {
+                return redirect()->route('voyageur.dashboard')->with('success_dialog', 'Réservation annulée avec succès.');
+            }
+            
             return back()->with('success_dialog', 'Réservation annulée avec succès.');
         } catch (\Exception $e) {
              return back()->with('error_dialog', $e->getMessage());

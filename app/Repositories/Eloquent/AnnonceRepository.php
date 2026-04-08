@@ -46,7 +46,7 @@ class AnnonceRepository implements AnnonceRepositoryInterface
 
     public function rechercherAnnoncesDisponibles(array $criteria): Collection
     {
-        $query = Annonce::where('statut', StatutAnnonce::PUBLIE);
+        $query = Annonce::where('statut', StatutAnnonce::PUBLIE->value);
 
         // Recherche par ID catégorie exact
         if (!empty($criteria['id_categorie'])) {
@@ -80,7 +80,7 @@ class AnnonceRepository implements AnnonceRepositoryInterface
             // On cherche les annonces qui ont des calendriers marquant "Disponible" sur TOUT l'intervalle
             // OU plus simplement on exclut celles qui ont une réservation confirmée sur ces dates
             $query->whereDoesntHave('reservations', function($q) use ($checkin, $checkout) {
-                $q->whereIn('statut', ['Confirmée', 'En cours'])
+                $q->whereIn('statut', [\App\Enums\StatutReservation::CONFIRMEE, \App\Enums\StatutReservation::EN_COURS])
                   ->where(function($sub) use ($checkin, $checkout) {
                       $sub->where(function($sq) use ($checkin, $checkout) {
                           $sq->where('date_arrivee', '>=', $checkin)

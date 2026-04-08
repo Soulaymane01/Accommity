@@ -78,11 +78,14 @@
                                             @else bg-slate-100 text-slate-800 @endif">
                                             {{ $reservation->statut->value }}
                                         </span>
+                                        @if($reservation->statut->value == 'Refusée' && $reservation->motif_refus)
+                                            <p class="mt-2 text-[10px] font-semibold text-rose-500 bg-rose-50 px-2 py-1 rounded-md max-w-[120px] truncate" title="{{ $reservation->motif_refus }}">Motif: {{ $reservation->motif_refus }}</p>
+                                        @endif
                                     </td>
                                     <td class="p-4 pr-6 text-right">
                                         @if($reservation->statut->value == 'En attente')
                                             <div class="flex items-center justify-end gap-2">
-                                                <form action="{{ route('hote.reservations.refuse', $reservation->id_reservation) }}" method="POST">
+                                                <form action="{{ route('hote.reservations.refuse', $reservation->id_reservation) }}" method="POST" onsubmit="const reason = prompt('Pourquoi refusez-vous cette demande ?', 'Dates non disponibles'); if(!reason) return false; this.motif.value = reason;">
                                                     @csrf
                                                     <input type="hidden" name="motif" value="Non disponible">
                                                     <button type="submit" class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Refuser">

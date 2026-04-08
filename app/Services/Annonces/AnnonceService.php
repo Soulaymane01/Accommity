@@ -47,7 +47,7 @@ class AnnonceService
         }
 
         $data['id_hote'] = $hote->id_utilisateur;
-        $data['statut'] = StatutAnnonce::PUBLIE; // RO02: Initialement EN_VERIFICATION (temporairement PUBLIE pour dev)
+        $data['statut'] = StatutAnnonce::PUBLIE->value; // RO02: Initialement EN_VERIFICATION (temporairement PUBLIE pour dev)
         
         $data['date_creation'] = now();
         $data['photo_url'] = collect($data)->get('photo_url', '');
@@ -99,5 +99,34 @@ class AnnonceService
 
         // Désactivation (Suppression logique)
         return $this->repository->delete($idAnnonce);
+    }
+
+    public function getDatesOccupees($idAnnonce)
+    {
+        $annonce = $this->repository->findById($idAnnonce);
+        
+        $occupees = [];
+
+        // 1. Réservations confirmées
+        foreach ($annonce->reservations()->whereIn('statut', [\App\Enums\StatutReservation::CONFIRMEE, \App\Enums\StatutReservation::EN_COURS])->get() as $res) {
+            $curr = \Carbon\Carbon::parse($res->date_arrivee);
+            $end = \Carbon\Carbon::parse($res->date_depart);
+            while ($curr->lt($end)) {
+                $occupees[] = $curr->format('Y-m-d');
+                $curr->addDay();
+            }
+        }
+
+        // 2. Blocages manuels
+        foreach ($annonce->calendrier()->where('est_disponible', false)->get() as $cal) {
+            $curr = \Carbon\Carbon::parse($cal->date_debut);
+            $end = \Carbon\Carbon::parse($cal->date_fin);
+            while ($curr->lte($end)) {
+                $occupees[] = $curr->format('Y-m-d');
+                $curr->addDay();
+            }
+        }
+
+        return array_unique($occupees);
     }
 }

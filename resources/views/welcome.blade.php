@@ -76,9 +76,10 @@
                 @forelse ($annonces as $annonce)
                     <x-annonce-card 
                         :id="$annonce->id_annonce"
+                        :titre="$annonce->titre"
                         :image="$annonce->photo_url ?: '/images/annonces/1.jpg'"
                         :type="$annonce->type_logement"
-                        :ville="$annonce->categorie->ville ?? $annonce->adresse"
+                        :ville="$annonce->categorie->ville ?? ($annonce->ville ?? $annonce->adresse)"
                         :prix="$annonce->tarif_nuit"
                         note="4.8"
                     />

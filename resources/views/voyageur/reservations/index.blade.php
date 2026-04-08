@@ -49,6 +49,9 @@
                                         @else bg-slate-100 text-slate-800 @endif">
                                         {{ $reservation->statut->value }}
                                     </span>
+                                    @if($reservation->statut->value == 'Refusée' && $reservation->motif_refus)
+                                        <p class="mt-2 text-[11px] font-semibold text-rose-500 bg-rose-50 px-2 py-1 rounded-md">Motif: {{ $reservation->motif_refus }}</p>
+                                    @endif
                                 </div>
                             </div>
 
@@ -66,16 +69,15 @@
                                 </div>
                             </div>
 
-                            <div class="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4">
-                                <a href="{{ route('annonces.show', $reservation->id_annonce) }}" class="text-sm font-semibold text-slate-900 hover:underline px-4 py-2">Afficher l'annonce</a>
-                                @if($reservation->statut->value == 'Confirmée' || $reservation->statut->value == 'En attente')
-                                    <form action="{{ route('reservations.cancel', $reservation->id_reservation) }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="rounded-xl bg-white border border-rose-200 text-rose-600 px-4 py-2 text-sm font-bold shadow-sm hover:bg-rose-50 transition-colors">
-                                            Annuler
-                                        </button>
-                                    </form>
+                            <div class="mt-6 flex gap-2 border-t border-slate-100 pt-4">
+                                @if(in_array($reservation->statut->value, ['En attente', 'Confirmée']))
+                                    <a href="{{ route('reservations.cancel.preview', $reservation->id_reservation) }}" class="flex-1 text-center py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                                        Annuler
+                                    </a>
                                 @endif
+                                <a href="{{ route('annonces.show', $reservation->id_annonce) }}" class="flex-1 text-center py-2.5 rounded-xl bg-slate-900 text-sm font-bold text-white hover:bg-slate-800 transition-colors">
+                                    Voir l'annonce
+                                </a>
                             </div>
                         </div>
                     </div>

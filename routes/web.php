@@ -52,6 +52,7 @@ Route::middleware('auth')->group(function () {
     });
     Route::get('/mes-voyages', [\App\Http\Controllers\Reservations\ReservationController::class, 'mesVoyages'])->name('voyageur.reservations.index');
     Route::post('/reservations/{id}/cancel', [\App\Http\Controllers\Reservations\ReservationController::class, 'cancel'])->name('reservations.cancel');
+    Route::get('/reservations/{id}/annuler-apercu', [\App\Http\Controllers\Reservations\ReservationController::class, 'apercuAnnulation'])->name('reservations.cancel.preview');
 
     // Réservations - Hôte
     Route::get('/hote/reservations', [\App\Http\Controllers\Reservations\ReservationController::class, 'demandes'])->name('hote.reservations.demandes');

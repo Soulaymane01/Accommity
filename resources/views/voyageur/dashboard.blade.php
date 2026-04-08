@@ -73,6 +73,7 @@
                         @foreach($recommandations as $recommandation)
                             <x-annonce-card 
                                 :id="$recommandation->id_annonce"
+                                :titre="$recommandation->titre"
                                 :image="$recommandation->photo_url ?: '/images/annonces/1.jpg'"
                                 :type="$recommandation->type_logement"
                                 :ville="$recommandation->adresse"
