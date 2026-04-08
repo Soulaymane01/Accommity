@@ -32,7 +32,9 @@ class AnnonceController
     public function show($id)
     {
         $annonce = $this->annonceService->getDetailsAnnonce($id);
-        return view('annonces.show', compact('annonce'));
+        $datesBloquees = $this->annonceService->getDatesOccupees($id);
+        
+        return view('annonces.show', compact('annonce', 'datesBloquees'));
     }
 
     // ----- VUES HOTE -----
