@@ -10,15 +10,21 @@ class HomeController
     /**
      * Display the landing page with annonces.
      */
+    protected $annonceService;
+
+    public function __construct(\App\Services\Annonces\AnnonceService $annonceService)
+    {
+        $this->annonceService = $annonceService;
+    }
+
+    /**
+     * Display the landing page with annonces.
+     */
     public function index()
     {
         try {
-            // Fetch 10 annonces joined with categories for the 'ville' field
-            $annonces = DB::table('annonces')
-                ->leftJoin('categorie_geographiques', 'annonces.id_categorie', '=', 'categorie_geographiques.id_categorie')
-                ->select('annonces.*', 'categorie_geographiques.ville')
-                ->take(10)
-                ->get();
+            // Use the same logic as listing page but with no filters
+            $annonces = $this->annonceService->rechercherAnnonces([]);
         } catch (\Exception $e) {
             // Fallback empty collection if the table does not exist or errors out
             $annonces = collect([]);

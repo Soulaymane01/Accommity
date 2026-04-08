@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Modifier {{ $annonce->titre }} | Accommity</title>
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased h-full flex flex-col min-h-screen">
+    <x-header />
+
+    <main class="flex-grow py-12">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 class="text-3xl font-bold text-slate-900 mb-8 tracking-tight">Modifier l'annonce</h1>
+
+            @if($errors->any())
+            <div class="mb-8 bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl">
+                <ul class="list-disc list-inside text-sm font-medium">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+            @endif
+
+            <form action="{{ route('hote.annonces.update', $annonce->id_annonce) }}" method="POST" class="space-y-8 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                @csrf
+                @method('PUT')
+                
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900 mb-4 border-b pb-2">Informations Générales</h2>
+                    <div class="grid grid-cols-1 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700">Titre de l'annonce</label>
+                            <input type="text" name="titre" value="{{ old('titre', $annonce->titre) }}" class="mt-2 block w-full rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-4 py-3 border" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700">Description détaillée</label>
+                            <textarea name="description" rows="4" class="mt-2 block w-full rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-4 py-3 border" required>{{ old('description', $annonce->description) }}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700">URL de la photo</label>
+                            <input type="url" name="photo_url" value="{{ old('photo_url', $annonce->photo_url) }}" class="mt-2 block w-full rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-4 py-3 border">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900 mb-4 border-b pb-2">Détails du Logement</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700">Type de logement</label>
+                            <select name="type_logement" class="mt-2 block w-full rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-4 py-3 border">
+                                <option value="Appartement entier" @if($annonce->type_logement == 'Appartement entier') selected @endif>Appartement entier</option>
+                                <option value="Chambre privée" @if($annonce->type_logement == 'Chambre privée') selected @endif>Chambre privée</option>
+                                <option value="Villa" @if($annonce->type_logement == 'Villa') selected @endif>Villa</option>
+                                <option value="Maison d'hôtes" @if($annonce->type_logement == "Maison d'hôtes") selected @endif>Maison d'hôtes</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700">Capacité (personnes)</label>
+                            <input type="number" name="capacite" value="{{ old('capacite', $annonce->capacite) }}" min="1" class="mt-2 block w-full rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-4 py-3 border" required>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-slate-700">Adresse</label>
+                            <input type="text" name="adresse" value="{{ old('adresse', $annonce->adresse) }}" class="mt-2 block w-full rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-4 py-3 border" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900 mb-4 border-b pb-2">Classification et Règles</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700">Catégorie géographique</label>
+                            <select name="id_categorie" class="mt-2 block w-full rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-4 py-3 border" required>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id_categorie }}" @if($annonce->id_categorie == $cat->id_categorie) selected @endif>{{ $cat->ville }} ({{ $cat->pays }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700">Politique d'annulation</label>
+                            <select name="id_politique" class="mt-2 block w-full rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-4 py-3 border" required>
+                                @foreach($politiques as $pol)
+                                    <option value="{{ $pol->id_politique }}" @if($annonce->id_politique == $pol->id_politique) selected @endif>{{ $pol->type_politique->value }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900 mb-4 border-b pb-2">Tarification & Modes</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700">Tarif par nuit (MAD)</label>
+                            <input type="number" step="0.01" name="tarif_nuit" value="{{ old('tarif_nuit', $annonce->tarif_nuit) }}" class="mt-2 block w-full rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-4 py-3 border" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700">Mode de réservation</label>
+                            <select name="mode_reservation" class="mt-2 block w-full rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-4 py-3 border" required>
+                                <option value="réservation instantanée" @if($annonce->mode_reservation->value == 'réservation instantanée') selected @endif>Instantanée</option>
+                                <option value="demande de réservation" @if($annonce->mode_reservation->value == 'demande de réservation') selected @endif>Demande</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-4">
+                    <a href="{{ route('hote.annonces.index') }}" class="mr-4 inline-flex justify-center items-center rounded-xl bg-white px-6 py-3 text-sm font-bold text-slate-700 shadow-sm border border-slate-300 hover:bg-slate-50">Annuler</a>
+                    <button type="submit" class="inline-flex justify-center items-center rounded-xl bg-blue-600 px-8 py-3 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors">Sauvegarder les modifications</button>
+                </div>
+            </form>
+        </div>
+    </main>
+    <x-footer />
+</body>
+</html>

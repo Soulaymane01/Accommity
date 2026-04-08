@@ -26,10 +26,15 @@ class PolitiqueAnnulation extends Model
         'type_politique' => TypePolitiqueAnnulation::class,
     ];
 
-    // Method expected by the Class diagram
-    public function calculerMontantRemboursement($dateAnnulation, $dateArrivee): float
+    public function annonces()
     {
-        // Stub: Implement complex logic for penalty calculation
-        return 0.0;
+        return $this->hasMany(Annonce::class, 'id_politique', 'id_politique');
     }
+
+    // UML Methods
+    public function definirPolitiqueAnnulation($type) {}
+    public function modifierPolitiqueAnnulation($type) {}
+    public function calculerRemboursement($montant, $dateAnnulation) : float { return 0.0; }
+    public function remboursementPartiel($idReservation) {}
+    public function remboursementIntegral($idReservation) {}
 }

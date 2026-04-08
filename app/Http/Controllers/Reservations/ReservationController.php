@@ -2,16 +2,14 @@
 
 namespace App\Http\Controllers\Reservations;
 
-use App\Http\Controllers\Controller;
 use App\Http\Requests\Reservations\StoreReservationRequest;
-use App\Http\Resources\Reservations\ReservationResource;
 use App\Services\Reservations\ReservationService;
 use App\Repositories\Interfaces\ReservationRepositoryInterface;
 use App\Enums\TypeActeurAnnulation;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
-class ReservationController extends Controller
+class ReservationController
 {
     use AuthorizesRequests;
 
@@ -24,6 +22,33 @@ class ReservationController extends Controller
         $this->repository = $repository;
     }
 
+    // Vue: "Mes Voyages" (Dashboard Voyageur)
+    public function mesVoyages(Request $request)
+    {
+        $reservations = \App\Models\Reservations\Reservation::where('id_voyageur', $request->user()->id_utilisateur)
+                        ->with('annonce')
+                        ->orderBy('date_creation', 'desc')
+                        ->get();
+                        
+        return view('voyageur.reservations.index', compact('reservations'));
+    }
+
+    // Vue: "Demandes de réservation" (Dashboard Hôte)
+    public function demandes(Request $request)
+    {
+        $query = \App\Models\Reservations\Reservation::where('id_hote', $request->user()->id_utilisateur)
+                        ->with(['annonce', 'voyageur'])
+                        ->orderBy('date_creation', 'desc');
+
+        if ($request->has('id_annonce')) {
+            $query->where('id_annonce', $request->id_annonce);
+        }
+
+        $reservations = $query->get();
+                        
+        return view('hote.reservations.index', compact('reservations'));
+    }
+
     public function store(StoreReservationRequest $request)
     {
         $this->authorize('create', \App\Models\Reservations\Reservation::class);
@@ -33,25 +58,23 @@ class ReservationController extends Controller
             'dateDepart' => $request->date_depart
         ];
 
-        $reservation = $this->reservationService->soumettreDemande(
-            $request->id_annonce,
-            $dates,
-            $request->nb_voyageurs,
-            $request->message_optionnel
-        );
+        try {
+            $reservation = $this->reservationService->soumettreDemande(
+                $request->id_annonce,
+                $dates,
+                $request->nb_voyageurs,
+                $request->message_optionnel
+            );
 
-        return new ReservationResource($reservation);
-    }
-
-    public function show($id)
-    {
-        $reservation = $this->repository->findById($id);
-        if (!$reservation) {
-            return response()->json(['message' => 'Not found'], 404);
+            if ($reservation->statut->value === 'Confirmée') {
+                return redirect()->route('voyageur.reservations.index')->with('success_dialog', 'Votre réservation instantanée a été confirmée !');
+            }
+            
+            return redirect()->route('voyageur.reservations.index')->with('success_dialog', 'Demande de réservation envoyée à l\'hôte.');
+            
+        } catch (\Exception $e) {
+            return back()->with('error_dialog', $e->getMessage());
         }
-        $this->authorize('view', $reservation);
-        
-        return new ReservationResource($reservation);
     }
 
     public function accept($id)
@@ -59,19 +82,35 @@ class ReservationController extends Controller
         $reservation = $this->repository->findById($id);
         $this->authorize('accept', $reservation);
 
-        $this->reservationService->accepterDemande($id);
-        
-        return response()->json(['message' => 'Réservation acceptée.']);
+        try {
+            $this->reservationService->accepterDemande($id);
+            return back()->with('success_dialog', 'Réservation acceptée. Le calendrier a été mis à jour.');
+        } catch (\Exception $e) {
+            return back()->with('error_dialog', $e->getMessage());
+        }
     }
 
     public function refuse(Request $request, $id)
     {
         $reservation = $this->repository->findById($id);
-        $this->authorize('accept', $reservation); // same permission as accept for host
+        $this->authorize('accept', $reservation); 
         
-        $this->reservationService->refuserDemande($id, $request->input('motif'));
-        
-        return response()->json(['message' => 'Réservation refusée.']);
+        try {
+            $this->reservationService->refuserDemande($id, $request->input('motif', 'Non spécifié'));
+            return back()->with('success_dialog', 'Réservation refusée.');
+        } catch (\Exception $e) {
+            return back()->with('error_dialog', $e->getMessage());
+        }
+    }
+
+    public function apercuAnnulation($id)
+    {
+        $reservation = $this->repository->findById($id);
+        $this->authorize('cancel', $reservation);
+
+        $details = $this->reservationService->calculerApercuAnnulation($id);
+
+        return view('voyageur.reservations.cancel_preview', compact('reservation', 'details'));
     }
 
     public function cancel(Request $request, $id)
@@ -79,12 +118,21 @@ class ReservationController extends Controller
         $reservation = $this->repository->findById($id);
         $this->authorize('cancel', $reservation);
         
+        // Determine whether it is the Voyageur or the Hote canceling it
         $acteur = $request->user()->id_utilisateur === $reservation->id_voyageur 
                  ? TypeActeurAnnulation::VOYAGEUR 
                  : TypeActeurAnnulation::HOTE;
                  
-        $this->reservationService->annulerReservation($id, $acteur);
-        
-        return response()->json(['message' => 'Réservation annulée.']);
+        try {
+            $this->reservationService->annulerReservation($id, $acteur);
+            
+            if ($acteur === TypeActeurAnnulation::VOYAGEUR) {
+                return redirect()->route('voyageur.dashboard')->with('success_dialog', 'Réservation annulée avec succès.');
+            }
+            
+            return back()->with('success_dialog', 'Réservation annulée avec succès.');
+        } catch (\Exception $e) {
+             return back()->with('error_dialog', $e->getMessage());
+        }
     }
 }
