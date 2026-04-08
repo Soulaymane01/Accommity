@@ -20,7 +20,7 @@ class ReservationPolicy
 
     public function create(User $user)
     {
-        return $user->est_voyageur;
+        return $user->est_voyageur || $user->est_hote;
     }
 
     public function cancel(User $user, Reservation $reservation)

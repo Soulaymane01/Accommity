@@ -11,69 +11,87 @@
 <body class="bg-white text-slate-900 antialiased h-full flex flex-col min-h-screen">
     
     <x-header />
+    <x-dialogs />
 
     <!-- ALERTE: En cours de traitement -->
-    @if(session('success_dialog'))
-    <div id="success-dialog-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
-        <div class="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl transform transition-all text-center">
-            <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-blue-50 mb-6 border-8 border-blue-100">
-                <svg class="h-10 w-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </div>
-            <h3 class="text-2xl font-bold text-slate-900 mb-3 tracking-tight">Traitement en cours</h3>
-            <p class="text-[15px] leading-relaxed text-slate-600 mb-8 font-medium">
-                {{ session('success_dialog') }}
-            </p>
-            <button onclick="document.getElementById('success-dialog-overlay').remove()" class="w-full inline-flex justify-center items-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-[15px] font-bold text-white shadow-sm hover:bg-blue-700 hover:shadow-md transition-all active:scale-[0.98]">
-                J'ai compris
-            </button>
-        </div>
-    </div>
-    @endif
-
-    <!-- ALERTE: Compte Rejeté -->
-    @if(session('error_dialog'))
-    <div id="error-dialog-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md">
-        <div class="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl transform transition-all text-center border-t-8 border-rose-500">
-            <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-rose-50 mb-6 border-8 border-rose-100">
-                <svg class="h-10 w-10 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-            </div>
-            <h3 class="text-2xl font-black text-rose-600 mb-3 uppercase tracking-tight">Compte Rejeté</h3>
-            <div class="bg-rose-50/50 rounded-xl p-4 mb-8">
-                <p class="text-[15px] leading-relaxed text-rose-900 font-medium font-semibold">
-                    {{ session('error_dialog') }}
-                </p>
-            </div>
-            <button onclick="document.getElementById('error-dialog-overlay').remove()" class="w-full inline-flex justify-center items-center gap-2 rounded-xl bg-rose-600 px-6 py-3.5 text-[15px] font-bold text-white shadow-sm hover:bg-rose-700 hover:shadow-md hover:shadow-rose-500/20 transition-all active:scale-[0.98]">
-                Fermer
-            </button>
-        </div>
-    </div>
-    @endif
 
     <!-- Main Content -->
     <main class="flex-grow">
-        <!-- Hero / Title -->
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-6">
+        <!-- Hero / Title & Search -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
             <h1 class="text-3xl font-bold text-slate-900 mb-2">Trouvez votre prochain hébergement</h1>
-            <p class="text-slate-500">Découvrez des logements uniques pour vos vacances, ou devenez hôte.</p>
+            <p class="text-slate-500 mb-8">Découvrez des logements uniques pour vos vacances, ou devenez hôte.</p>
+
+            <!-- Custom Search Bar -->
+            <form action="{{ route('annonces.index') }}" method="GET" class="max-w-3xl bg-white rounded-full shadow-md border border-slate-200 flex items-center p-2 mx-auto sm:mx-0">
+                <div class="flex-1 px-6 py-2 border-r border-slate-200">
+                    <label class="block text-xs font-bold text-slate-900 uppercase tracking-wider">Destination</label>
+                    <input type="text" name="location" value="{{ request('location') }}" placeholder="Où allez-vous ?" class="w-full text-slate-600 text-sm outline-none bg-transparent placeholder-slate-400 mt-1">
+                </div>
+                <div class="hidden sm:block flex-1 px-6 py-2 border-r border-slate-200">
+                    <label class="block text-xs font-bold text-slate-900 uppercase tracking-wider">Arrivée</label>
+                    <input type="date" name="checkin" value="{{ request('checkin') }}" min="{{ date('Y-m-d') }}" class="w-full text-slate-600 text-sm outline-none bg-transparent placeholder-slate-400 mt-1">
+                </div>
+                <div class="hidden sm:block flex-1 px-6 py-2 border-r border-slate-200">
+                    <label class="block text-xs font-bold text-slate-900 uppercase tracking-wider">Départ</label>
+                    <input type="date" name="checkout" value="{{ request('checkout') }}" class="w-full text-slate-600 text-sm outline-none bg-transparent placeholder-slate-400 mt-1">
+                </div>
+                <div class="flex-1 px-6 py-2">
+                    <label class="block text-xs font-bold text-slate-900 uppercase tracking-wider">Voyageurs</label>
+                    <input type="number" name="nb_voyageurs" value="{{ request('nb_voyageurs') }}" placeholder="Ajouter" min="1" class="w-full text-slate-600 text-sm outline-none bg-transparent placeholder-slate-400 mt-1">
+                </div>
+                <!-- Submit Button -->
+                <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white rounded-full p-4 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
+            </form>
+
+            <!-- Categories / Quick Filters -->
+            <div class="mt-12 flex items-center gap-8 overflow-x-auto pb-4 no-scrollbar border-b border-transparent">
+                @php
+                    $categories = [
+                        ['id' => 'Appartement', 'label' => 'Appartements', 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'],
+                        ['id' => 'Maison', 'label' => 'Maisons', 'icon' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
+                        ['id' => 'Villa', 'label' => 'Villas', 'icon' => 'M8 14v10M16 10v14M4 14h16'],
+                        ['id' => 'Studio', 'label' => 'Studios', 'icon' => 'M5 3v18l7-3 7 3V3H5z'],
+                        ['id' => 'Chambre', 'label' => 'Chambres', 'icon' => 'M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    ];
+                @endphp
+
+                @foreach($categories as $cat)
+                    <a href="{{ route('annonces.index', ['type_logement' => $cat['id']]) }}" 
+                       class="flex flex-col items-center gap-2 group min-w-fit transition-all {{ request('type_logement') == $cat['id'] ? 'text-slate-900 border-b-2 border-slate-900 pb-2' : 'text-slate-500 hover:text-slate-900' }}">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="{{ $cat['icon'] }}"></path>
+                        </svg>
+                        <span class="text-xs font-semibold whitespace-nowrap">{{ $cat['label'] }}</span>
+                    </a>
+                @endforeach
+            </div>
         </div>
 
         <!-- Annonces Grid -->
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-8 xl:grid-cols-5 gap-y-10 gap-x-6">
-                @foreach ($annonces as $annonce)
+                @forelse ($annonces as $annonce)
                     <x-annonce-card 
-                        :image="$annonce->photo_url ?? '/images/annonces/1.jpg'"
+                        :id="$annonce->id_annonce"
+                        :image="$annonce->photo_url ?: '/images/annonces/1.jpg'"
                         :type="$annonce->type_logement"
-                        :ville="$annonce->ville ?? $annonce->adresse"
+                        :ville="$annonce->categorie->ville ?? $annonce->adresse"
                         :prix="$annonce->tarif_nuit"
                         note="4.8"
                     />
-                @endforeach
+                @empty
+                    <div class="col-span-full py-12 text-center border-2 border-dashed border-slate-200 rounded-3xl">
+                        <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        <h3 class="mt-4 text-sm font-semibold text-slate-900">Aucun résultat</h3>
+                        <p class="mt-1 text-sm text-slate-500">Essayez d'ajuster votre recherche de destination ou la capacité.</p>
+                        @if(request()->has('location') || request()->has('nb_voyageurs'))
+                            <a href="{{ route('annonces.index') }}" class="mt-4 inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-500">Effacer les filtres &rarr;</a>
+                        @endif
+                    </div>
+                @endforelse
             </div>
         </div>
 
