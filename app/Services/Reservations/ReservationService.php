@@ -29,25 +29,49 @@ class ReservationService
 
     public function soumettreDemande(string $idAnnonce, array $dates, int $nbVoy, ?string $message): Reservation
     {
-        // Mock annonce for now to understand correct properties. We get it from DB.
         $annonce = Annonce::findOrFail($idAnnonce);
         
-        // Verifier disponibilité
-        // ... (This would be another service check `CalendrierService::verifierDisponibilite($idAnnonce, $dates)`)
+        $start = \Carbon\Carbon::parse($dates['dateArrivee']);
+        $end = \Carbon\Carbon::parse($dates['dateDepart']);
         
-        $mode = ModeReservation::tryFrom($annonce->mode_reservation) ?? ModeReservation::DEMANDE;
+        if ($end->lte($start)) {
+            throw new Exception("La date de départ doit être après la date d'arrivée.");
+        }
+
+        // Verifier disponibilité (Seulement les confirmations bloquent la soumission)
+        $overlap = Reservation::where('id_annonce', $idAnnonce)
+            ->whereIn('statut', [\App\Enums\StatutReservation::CONFIRMEE, \App\Enums\StatutReservation::EN_COURS])
+            ->where(function($query) use ($dates) {
+                $query->where(function($q) use ($dates) {
+                    $q->where('date_arrivee', '>=', $dates['dateArrivee'])
+                      ->where('date_arrivee', '<', $dates['dateDepart']);
+                })->orWhere(function($q) use ($dates) {
+                    $q->where('date_depart', '>', $dates['dateArrivee'])
+                      ->where('date_depart', '<=', $dates['dateDepart']);
+                })->orWhere(function($q) use ($dates) {
+                    $q->where('date_arrivee', '<=', $dates['dateArrivee'])
+                      ->where('date_depart', '>=', $dates['dateDepart']);
+                });
+            })->exists();
+
+        if ($overlap) {
+            throw new Exception("Désolé, ce logement est déjà réservé pour ces dates.");
+        }
+        
+        $mode = $annonce->mode_reservation ?? ModeReservation::DEMANDE;
+        $nights = $start->diffInDays($end);
         
         $data = [
             'id_annonce' => $idAnnonce,
-            'id_voyageur' => auth()->id() ?? 'mocked-voyageur-id', // auth id
+            'id_voyageur' => auth()->id(),
             'id_hote' => $annonce->id_hote,
             'date_arrivee' => $dates['dateArrivee'],
             'date_depart' => $dates['dateDepart'],
             'nb_voyageurs' => $nbVoy,
             'statut' => \App\Enums\StatutReservation::EN_ATTENTE,
             'mode_reservation' => $mode,
-            'montant_total' => $annonce->tarif_nuit * 1, // pseudo calc
-            'frais_service' => 0,
+            'montant_total' => $annonce->tarif_nuit * $nights,
+            'frais_service' => ($annonce->tarif_nuit * $nights) * 0.1, // 10% fees
             'message_optionnel' => $message,
             'id_politique' => $annonce->id_politique
         ];
@@ -55,10 +79,8 @@ class ReservationService
         $reservation = $this->repository->create($data);
 
         if ($mode === ModeReservation::INSTANTANEE) {
-            // Confirm immediately
             $this->confirmerEtPayer($reservation->id_reservation, 'default_payment');
         } else {
-            // Start 24h timer
             $this->minuterieService->demarrerMinuterie24h($reservation->id_reservation);
         }
 
@@ -69,6 +91,27 @@ class ReservationService
     {
         $reservation = $this->repository->findById($idReservation);
         if (!$reservation) throw new Exception("Not found");
+
+        // Vérifier une dernière fois l'absence de conflit avant confirmation
+        $overlap = Reservation::where('id_annonce', $reservation->id_annonce)
+            ->where('id_reservation', '!=', $reservation->id_reservation)
+            ->whereIn('statut', [\App\Enums\StatutReservation::CONFIRMEE, \App\Enums\StatutReservation::EN_COURS])
+            ->where(function($query) use ($reservation) {
+                $query->where(function($q) use ($reservation) {
+                    $q->where('date_arrivee', '>=', $reservation->date_arrivee)
+                      ->where('date_arrivee', '<', $reservation->date_depart);
+                })->orWhere(function($q) use ($reservation) {
+                    $q->where('date_depart', '>', $reservation->date_arrivee)
+                      ->where('date_depart', '<=', $reservation->date_depart);
+                })->orWhere(function($q) use ($reservation) {
+                    $q->where('date_arrivee', '<=', $reservation->date_arrivee)
+                      ->where('date_depart', '>=', $reservation->date_depart);
+                });
+            })->exists();
+
+        if ($overlap) {
+            throw new Exception("Impossible d'accepter : un autre voyageur a déjà réservé ces dates.");
+        }
 
         $this->statutService->appliquerTransition($reservation, \App\Enums\StatutReservation::CONFIRMEE);
         $this->minuterieService->annulerMinuterie($idReservation);
@@ -90,22 +133,71 @@ class ReservationService
     public function refuserDemande(string $idReservation, ?string $motif = null): void
     {
         $reservation = $this->repository->findById($idReservation);
+        $reservation->update(['motif_refus' => $motif]);
         $this->statutService->appliquerTransition($reservation, \App\Enums\StatutReservation::REFUSEE);
         $this->minuterieService->annulerMinuterie($idReservation);
-        // Dispatch Notification here or handled by Event
     }
 
     public function annulerReservation(string $idReservation, TypeActeurAnnulation $acteur): void
     {
         $reservation = $this->repository->findById($idReservation);
         
-        // PK_PAIEMENTS STUB: Remboursement logic here
+        // 1. Verifier si l'annulation est encore possible
+        if (in_array($reservation->statut, [\App\Enums\StatutReservation::TERMINEE, \App\Enums\StatutReservation::REFUSEE, \App\Enums\StatutReservation::ANNULEE])) {
+            throw new Exception("Cette réservation ne peut plus être annulée.");
+        }
 
+        // 2. Traitement des remboursements (PK_PAIEMENTS STUB)
+        $apercu = $this->calculerApercuAnnulation($idReservation);
+        
+        // 3. Mise à jour du statut
         $this->statutService->appliquerTransition($reservation, \App\Enums\StatutReservation::ANNULEE);
         $reservation->update(['acteur_annulation' => $acteur]);
         $this->minuterieService->annulerMinuterie($idReservation);
         
+        // 4. Débloquer le calendrier (PK_ANNONCES Integration)
+        // La recherche exclut déjà les 'Annulée', donc c'est automatique.
+        
         event(new ReservationAnnulee($reservation));
+    }
+
+    public function calculerApercuAnnulation(string $idReservation): array
+    {
+        $reservation = $this->repository->findById($idReservation);
+        $politique = $reservation->politique;
+
+        if (!$politique || $reservation->statut === \App\Enums\StatutReservation::EN_ATTENTE) {
+            return [
+                'montant_total' => $reservation->montant_total,
+                'montant_remboursement' => $reservation->montant_total,
+                'pourcentage' => 100,
+                'message' => "Annulation gratuite pour les demandes en attente."
+            ];
+        }
+
+        $now = now();
+        $arrivee = \Carbon\Carbon::parse($reservation->date_arrivee);
+        $joursAvant = $now->diffInDays($arrivee, false);
+
+        $taux = 0;
+        $message = "Aucun remboursement possible selon la politique de l'hôte.";
+
+        if ($joursAvant >= $politique->delai_remb_total) {
+            $taux = 100;
+            $message = "Remboursement intégral autorisé.";
+        } elseif ($joursAvant >= $politique->delai_remb_partiel) {
+            $taux = (float)$politique->taux_remb_partiel;
+            $message = "Remboursement partiel de {$taux}% autorisé.";
+        }
+
+        $rembourse = ($reservation->montant_total * $taux) / 100;
+
+        return [
+            'montant_total' => (float)$reservation->montant_total,
+            'montant_remboursement' => (float)$rembourse,
+            'pourcentage' => $taux,
+            'message' => $message
+        ];
     }
 
     public function setStatutEnCours(string $idReservation): void
@@ -114,6 +206,15 @@ class ReservationService
         $this->statutService->appliquerTransition($reservation, \App\Enums\StatutReservation::EN_COURS);
     }
     
+    public function marquerExpirée(string $idReservation): void
+    {
+        $reservation = $this->repository->findById($idReservation);
+        if ($reservation && $reservation->statut === \App\Enums\StatutReservation::EN_ATTENTE) {
+            $this->statutService->appliquerTransition($reservation, \App\Enums\StatutReservation::EXPIREE);
+            $this->minuterieService->annulerMinuterie($idReservation);
+        }
+    }
+
     public function consulterDemandesEnAttente(string $idHote)
     {
         return $this->repository->getEnAttenteByHote($idHote);

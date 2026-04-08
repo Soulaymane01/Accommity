@@ -4,30 +4,42 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Services\Reservations\MinuterieService;
-use App\Models\Reservations\Reservation;
-use App\Jobs\ExpirerDemande;
+use App\Services\Reservations\ReservationService;
 
 class ExpireReservations extends Command
 {
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
     protected $signature = 'reservations:expire';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
     protected $description = 'Expire les demandes de réservation en attente depuis plus de 24h.';
 
-    public function handle(MinuterieService $minuterieService)
+    /**
+     * Execute the console command.
+     */
+    public function handle(MinuterieService $minuterieService, ReservationService $reservationService)
     {
-        $this->info('Début de l\'expiration des réservations...');
-        $expireesIds = $minuterieService->getDemandesExpirees();
+        $this->info('Vérification des demandes expirées...');
         
-        $count = 0;
-        foreach ($expireesIds as $id) {
-            $reservation = Reservation::find($id);
-            if ($reservation) {
-                // Dispatch Job
-                ExpirerDemande::dispatch($reservation);
-                $minuterieService->annulerMinuterie($id);
-                $count++;
+        $expiredIds = $minuterieService->getDemandesExpirees();
+        
+        foreach ($expiredIds as $id) {
+            try {
+                $reservationService->marquerExpirée($id);
+                $this->info("Réservation {$id} marquée comme expirée.");
+            } catch (\Exception $e) {
+                $this->error("Erreur pour {$id}: {$e->getMessage()}");
             }
         }
-        
-        $this->info("Terminé. $count demandes expirées traitées.");
+
+        $this->info('Traitement terminé.');
     }
 }

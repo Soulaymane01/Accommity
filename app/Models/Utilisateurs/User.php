@@ -50,6 +50,11 @@ class User extends Authenticatable
         return $this->hasOne(Profil::class, 'id_utilisateur', 'id_utilisateur');
     }
 
+    public function reservations()
+    {
+        return $this->hasMany(\App\Models\Reservations\Reservation::class, 'id_voyageur', 'id_utilisateur');
+    }
+
     // --- METHODES UML: DIAGRAMME DE CLASSES --- //
 
     /**

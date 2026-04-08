@@ -34,6 +34,7 @@ class Reservation extends Model
         'frais_service',
         'message_optionnel',
         'acteur_annulation',
+        'motif_refus',
     ];
 
     protected $casts = [

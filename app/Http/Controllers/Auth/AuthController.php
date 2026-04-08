@@ -55,14 +55,14 @@ class AuthController
 
                 // If Validé (Valid, Approuvé, Validé)
                 if ($status === \App\Enums\VerificationStatut::VALIDE) {
-                    return redirect()->intended(route('dashboard'));
+                    return redirect()->route('dashboard');
                 }
 
                 // Only other case is if they skipped document submission
-                return redirect()->intended(route('verification.notice'));
+                return redirect()->route('verification.notice');
             }
 
-            return redirect()->intended(route('dashboard'));
+            return redirect()->route('dashboard');
         }
 
         return back()->withErrors([
