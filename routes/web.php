@@ -24,6 +24,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
     Route::get('/verification-identite', [AuthController::class, 'verificationNotice'])->name('verification.notice');
     Route::post('/verification-identite', [AuthController::class, 'submitVerification'])->name('verification.submit');
+
+    // Notifications
+    Route::get('/notifications', [\App\Http\Controllers\Notifications\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{notification}/read', [\App\Http\Controllers\Notifications\NotificationController::class, 'markAsRead'])->name('notifications.read');
 });
 
 /*
