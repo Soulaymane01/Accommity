@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $annonce->titre }} | Accommity</title>
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/fr.js"></script>
     <style>body { font-family: 'Inter', sans-serif; }</style>
 </head>
 <body class="bg-white text-slate-900 antialiased h-full flex flex-col min-h-screen">
@@ -76,11 +79,11 @@
                                 <div class="flex border-b border-slate-300">
                                     <div class="flex-1 p-3 border-r border-slate-300">
                                         <label class="block text-[10px] font-bold uppercase text-slate-900">Arrivée</label>
-                                        <input type="date" name="date_arrivee" id="date_arrivee" required min="{{ date('Y-m-d') }}" class="w-full text-sm outline-none bg-transparent">
+                                        <input type="text" name="date_arrivee" id="date_arrivee" required placeholder="Ajouter une date" class="w-full text-sm outline-none bg-transparent">
                                     </div>
                                     <div class="flex-1 p-3">
                                         <label class="block text-[10px] font-bold uppercase text-slate-900">Départ</label>
-                                        <input type="date" name="date_depart" id="date_depart" required class="w-full text-sm outline-none bg-transparent">
+                                        <input type="text" name="date_depart" id="date_depart" required placeholder="Ajouter une date" class="w-full text-sm outline-none bg-transparent">
                                     </div>
                                 </div>
                                 <div class="p-3">
@@ -116,6 +119,25 @@
                         </form>
 
                         <script>
+                            const pricePerNight = {{ $annonce->tarif_nuit }};
+                            const blockedDates = @json($datesBloquees);
+
+                            const fpConfig = {
+                                locale: 'fr',
+                                minDate: "today",
+                                dateFormat: "Y-m-d",
+                                disable: blockedDates,
+                                onChange: function(selectedDates, dateStr, instance) {
+                                    updatePrice();
+                                }
+                            };
+
+                            const fpArrivee = flatpickr("#date_arrivee", fpConfig);
+                            const fpDepart = flatpickr("#date_depart", {
+                                ...fpConfig,
+                                minDate: "today"
+                            });
+
                             const checkIn = document.getElementById('date_arrivee');
                             const checkOut = document.getElementById('date_depart');
                             const priceSummary = document.getElementById('price-summary');
@@ -123,8 +145,6 @@
                             const basePriceEl = document.getElementById('base-price');
                             const serviceFeesEl = document.getElementById('service-fees');
                             const totalPriceEl = document.getElementById('total-price');
-                            
-                            const pricePerNight = {{ $annonce->tarif_nuit }};
 
                             function updatePrice() {
                                 if (checkIn.value && checkOut.value) {
@@ -152,7 +172,7 @@
                             }
 
                             checkIn.addEventListener('change', (e) => {
-                                checkOut.min = e.target.value;
+                                fpDepart.set('minDate', e.target.value);
                                 updatePrice();
                             });
                             checkOut.addEventListener('change', updatePrice);
