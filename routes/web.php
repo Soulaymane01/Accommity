@@ -43,8 +43,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Dashboard Stats
         Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'index'])->name('dashboard');
 
-        // Emplacements vides (Views placeholders)
-        Route::view('/utilisateurs', 'admin.utilisateurs.index')->name('utilisateurs.index');
+        // Utilisateurs
+        Route::get('/utilisateurs', [\App\Http\Controllers\Admin\AdminUserController::class, 'index'])->name('utilisateurs.index');
+        Route::put('/utilisateurs/{id}', [\App\Http\Controllers\Admin\AdminUserController::class, 'update'])->name('utilisateurs.update');
+        Route::delete('/utilisateurs/{id}', [\App\Http\Controllers\Admin\AdminUserController::class, 'destroy'])->name('utilisateurs.destroy');
+        Route::post('/utilisateurs/verify/{id}', [\App\Http\Controllers\Admin\AdminUserController::class, 'validateIdentity'])->name('utilisateurs.verify');
+        Route::post('/utilisateurs/reject/{id}', [\App\Http\Controllers\Admin\AdminUserController::class, 'rejectIdentity'])->name('utilisateurs.reject');
         Route::view('/annonces', 'admin.annonces.index')->name('annonces.index');
         Route::view('/reservations', 'admin.reservations.index')->name('reservations.index');
         Route::view('/avis-signales', 'admin.avis_signales.index')->name('avis_signales.index');
