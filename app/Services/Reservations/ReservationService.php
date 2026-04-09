@@ -14,7 +14,7 @@ use App\Facades\AppNotification;
 use App\Enums\TypeAlerte;
 use App\Services\Paiements\PaiementService;
 use App\Services\Paiements\RemboursementService;
-
+use Exception;
 class ReservationService
 {
     protected $repository;
@@ -22,22 +22,18 @@ class ReservationService
     protected $minuterieService;
     protected $paiementService;
     protected $remboursementService;
-    protected $calendrierService;
-
     public function __construct(
         ReservationRepositoryInterface $repository,
         StatutService $statutService,
         MinuterieService $minuterieService,
         PaiementService $paiementService,
-        RemboursementService $remboursementService,
-        \App\Services\Annonces\CalendrierService $calendrierService
+        RemboursementService $remboursementService
     ) {
         $this->repository = $repository;
         $this->statutService = $statutService;
         $this->minuterieService = $minuterieService;
         $this->paiementService = $paiementService;
         $this->remboursementService = $remboursementService;
-        $this->calendrierService = $calendrierService;
     }
 
     public function soumettreDemande(string $idAnnonce, array $dates, int $nbVoy, ?string $message): Reservation
@@ -199,8 +195,6 @@ class ReservationService
         $this->statutService->appliquerTransition($reservation, \App\Enums\StatutReservation::REFUSEE);
         $this->minuterieService->annulerMinuterie($idReservation);
         
-        // Ensure calendar dates are freed
-        $this->calendrierService->libererDatesReservation($reservation->id_annonce, $reservation->date_arrivee, $reservation->date_depart);
 
         // If the demande was funded, trigger refund
         if ($reservation->paiement) {
@@ -232,7 +226,7 @@ class ReservationService
         $this->minuterieService->annulerMinuterie($idReservation);
         
         // 4. Débloquer le calendrier (PK_ANNONCES Integration)
-        $this->calendrierService->libererDatesReservation($reservation->id_annonce, $reservation->date_arrivee, $reservation->date_depart);
+        // La recherche exclut déjà les 'Annulée', donc c'est automatique via getDatesOccupees().
         
         $voyageur = User::find($reservation->id_voyageur);
         $hote = User::find($reservation->id_hote);
