@@ -18,7 +18,7 @@
             
             <div class="w-full sm:w-3/4 relative">
                 <input type="text" name="search" value="{{ $searchQuery }}" placeholder="Rechercher par commentaire, motif, nom de l'auteur..." 
-                       class="w-full rounded-lg border-slate-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 pl-10">
+                       class="w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 pl-10">
                 <svg class="w-5 h-5 text-slate-400 absolute left-3 top-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -49,8 +49,8 @@
                 <tr class="hover:bg-slate-50 transition-colors">
                     <td class="whitespace-nowrap py-4 pl-6 pr-3">
                         <div class="flex items-center gap-4">
-                            <div class="h-10 w-10 flex-shrink-0 bg-yellow-50 rounded-lg overflow-hidden flex items-center justify-center border border-yellow-200">
-                                <span class="text-sm font-black text-yellow-700">{{ $evaluation->note }}</span>
+                            <div class="h-10 w-10 flex-shrink-0 bg-blue-50 rounded-lg overflow-hidden flex items-center justify-center border border-blue-200">
+                                <span class="text-sm font-black text-blue-700">{{ $evaluation->note }}</span>
                             </div>
                             <div>
                                 <div class="font-semibold text-slate-800 truncate max-w-[250px]" title="{{ $evaluation->commentaire }}">"{{ Str::limit($evaluation->commentaire, 35) }}"</div>
@@ -63,11 +63,11 @@
                             <div class="font-medium text-slate-800">{{ $evaluation->auteur->prenom }} {{ $evaluation->auteur->nom }}</div>
                             <div class="text-[10px] text-slate-500 mt-1">{{ Str::limit($evaluation->auteur->email, 20) }}</div>
                         @else
-                            <div class="text-xs italic text-red-500">Inconnu</div>
+                            <div class="text-xs italic text-blue-500">Inconnu</div>
                         @endif
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-600">
-                        <div class="bg-red-50 text-red-700 px-2 py-1 rounded text-xs border border-red-100 truncate max-w-[150px]" title="{{ $evaluation->motif_signalement }}">
+                        <div class="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs border border-blue-100 truncate max-w-[150px]" title="{{ $evaluation->motif_signalement }}">
                             {{ Str::limit($evaluation->motif_signalement ?? 'Aucun motif', 20) }}
                         </div>
                     </td>
@@ -127,16 +127,16 @@
                     <div>
                         <!-- Contenu du signalement -->
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-                            <div class="bg-yellow-50 border-b border-yellow-100 px-5 py-3 flex justify-between items-center">
-                                <h3 class="font-bold text-yellow-800 text-sm">Contenu Explicite de l'Avis</h3>
-                                <div class="font-black text-2xl text-yellow-600">{{ $selectedAvis->note }} <span class="text-sm">/ 5</span></div>
+                            <div class="bg-blue-50 border-b border-blue-100 px-5 py-3 flex justify-between items-center">
+                                <h3 class="font-bold text-blue-800 text-sm">Contenu Explicite de l'Avis</h3>
+                                <div class="font-black text-2xl text-blue-600">{{ $selectedAvis->note }} <span class="text-sm">/ 5</span></div>
                             </div>
                             <div class="p-5">
                                 <p class="text-slate-700 italic text-sm leading-relaxed whitespace-pre-wrap">"{{ $selectedAvis->commentaire }}"</p>
                             </div>
-                            <div class="bg-red-50 p-4 border-t border-red-100">
-                                <div class="text-xs text-red-500 font-bold uppercase mb-1">Motif de Signalement :</div>
-                                <div class="text-sm font-medium text-red-800">{{ $selectedAvis->motif_signalement ?: 'Non précisé par l\'utilisateur.' }}</div>
+                            <div class="bg-blue-50 p-4 border-t border-blue-100">
+                                <div class="text-xs text-blue-500 font-bold uppercase mb-1">Motif de Signalement :</div>
+                                <div class="text-sm font-medium text-blue-800">{{ $selectedAvis->motif_signalement ?: 'Non précisé par l\'utilisateur.' }}</div>
                             </div>
                         </div>
 
@@ -147,9 +147,9 @@
                             </div>
                             
                             <div class="p-5 flex flex-col gap-4">
-                                <div class="flex items-center gap-3 bg-red-50 p-3 rounded-lg border border-red-100 relative">
-                                    <div class="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow">Auteur (Sanctionnable)</div>
-                                    <div class="h-10 w-10 bg-white rounded-full flex items-center justify-center text-red-400 font-bold border border-red-200">
+                                <div class="flex items-center gap-3 bg-blue-50 p-3 rounded-lg border border-blue-100 relative">
+                                    <div class="absolute -top-2 -right-2 bg-slate-800 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow">Auteur</div>
+                                    <div class="h-10 w-10 bg-white rounded-full flex items-center justify-center text-blue-400 font-bold border border-blue-200">
                                         @if($selectedAvis->auteur && $selectedAvis->auteur->profil && $selectedAvis->auteur->profil->photo_url)
                                             <img src="{{ asset($selectedAvis->auteur->profil->photo_url) }}" class="h-full w-full object-cover rounded-full">
                                         @else
@@ -183,38 +183,22 @@
                     <!-- Colonne 2: Panneau de Modération Admin -->
                     <div class="flex flex-col">
                         <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex-grow flex flex-col">
-                            <div class="bg-slate-800 px-6 py-4">
-                                <h3 class="text-white font-bold text-lg">Décision de Modération</h3>
-                            </div>
-                            
-                            <div class="p-6 flex-grow flex flex-col grid gap-6">
-                                
-                                <div class="bg-slate-50 p-4 border border-slate-200 rounded-lg text-sm text-slate-600">
-                                    Veuillez analyser le motif de signalement face au contenu de l'avis. Si ce contenu est abusif, diffamatoire ou faux, <strong class="text-red-600">supprimez-le</strong>. S'il respecte les CGU, <strong class="text-slate-800">conservez-le</strong>.
-                                </div>
+                            <div class="p-6 flex-grow flex flex-col justify-center gap-6 mt-8">
 
                                 <!-- Action Conserver -->
                                 <form method="POST" action="{{ route('admin.avis_signales.keep', $selectedAvis->id_evaluation) }}">
                                     @csrf
-                                    <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3.5 rounded-lg transition-colors text-base shadow-sm">
+                                    <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-5 rounded-xl transition-colors text-lg shadow-md border-2 border-slate-900">
                                         Conserver l'avis
                                     </button>
-                                    <p class="text-xs text-slate-500 mt-2 text-center">L'avis restera affiché publiquement. Le drapeau de signalement sera retiré.</p>
                                 </form>
                                 
-                                <div class="relative flex items-center justify-center my-2">
-                                    <div class="border-t border-slate-200 w-full absolute"></div>
-                                    <div class="bg-white px-3 relative text-xs text-slate-400 font-bold uppercase tracking-widest">OU</div>
-                                </div>
-
                                 <!-- Action Supprimer -->
                                 <form method="POST" action="{{ route('admin.avis_signales.delete', $selectedAvis->id_evaluation) }}">
                                     @csrf
-                                    <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-lg transition-colors text-base shadow-sm"
-                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet avis DÉFINITIVEMENT ?');">
+                                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-5 rounded-xl transition-colors text-lg shadow-md border-2 border-blue-700">
                                         Supprimer l'avis
                                     </button>
-                                    <p class="text-xs text-red-500 mt-2 text-center">Cette action est irréversible. L'auteur et la cible seront notifiés de votre décision.</p>
                                 </form>
                                 
                             </div>

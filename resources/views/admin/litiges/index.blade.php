@@ -147,42 +147,16 @@
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     
-                    <!-- Colonne 1: Le Corps du Litige et de la Réservation/Évaluation -->
+                    <!-- Colonne 1: Le Motif du Litige et le Déclarant -->
                     <div>
-                        <!-- Description du Litige -->
+                        <!-- Description du Litige (Motif) -->
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-                            <div class="bg-red-50 border-b border-red-100 px-5 py-3">
-                                <h3 class="font-bold text-red-800 text-sm">Motif rapporté : {{ $selectedLitige->motif }}</h3>
-                            </div>
-                            <div class="p-5">
-                                <p class="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">Le déclarant conteste l'évaluation N° {{ optional($selectedLitige->evaluation)->id_evaluation }}. Ce litige concerne potentiellement un commentaire inapproprié ou faux.</p>
+                            <div class="bg-slate-50 border-b border-slate-100 px-5 py-3">
+                                <h3 class="font-bold text-slate-800 text-sm">Motif rapporté : {{ $selectedLitige->motif }}</h3>
                             </div>
                         </div>
 
-                        <!-- L'Évaluation En Question -->
-                        @if($selectedLitige->evaluation)
-                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-                            <div class="bg-slate-100 border-b border-slate-200 px-5 py-3">
-                                <h3 class="font-bold text-slate-700 text-sm">Contenu de l'Évaluation Signalée</h3>
-                            </div>
-                            <div class="p-5">
-                                <div class="flex items-center gap-2 mb-3">
-                                    <span class="text-2xl font-black text-slate-800">{{ $selectedLitige->evaluation->note }} <span class="text-lg text-slate-400 font-normal">/ 5</span></span>
-                                    <div class="text-yellow-400">★★★★★</div>
-                                </div>
-                                <div class="text-slate-600 bg-slate-50 p-4 border border-slate-100 rounded text-sm italic">
-                                    "{{ $selectedLitige->evaluation->commentaire }}"
-                                </div>
-                                @if($selectedLitige->evaluation->motif_signalement)
-                                <div class="mt-4 p-3 bg-red-50 text-red-700 text-xs border border-red-100 rounded">
-                                    <span class="font-bold">Motif initial de signalement:</span> {{ $selectedLitige->evaluation->motif_signalement }}
-                                </div>
-                                @endif
-                            </div>
-                        </div>
-                        @endif
-
-                        <!-- Les Personnes Concernées par le Litige -->
+                        <!-- Le Déclarant -->
                         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                             <div class="bg-slate-100 border-b border-slate-200 px-5 py-3 flex justify-between items-center">
                                 <h3 class="font-bold text-slate-700 text-sm">Le Déclarant (Auteur du ticket)</h3>
@@ -220,20 +194,11 @@
                             <div class="p-6 flex-grow flex flex-col justify-center">
                                 
                                 @if($selectedLitige->statut === \App\Enums\TicketLitigeStatut::EN_COURS)
-                                    <div class="mb-6 flex items-center gap-3 bg-red-50 text-red-800 p-4 border border-red-100 rounded-lg">
-                                        <svg class="w-6 h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                        <p class="text-sm font-medium">Ce litige nécessite une intervention de l'administrateur. Renseignez la décision finale pour le clôturer (Les parties seront notifiées).</p>
-                                    </div>
-                                    
-                                    <form method="POST" action="{{ route('admin.litiges.close', $selectedLitige->id_ticket) }}" class="flex flex-col gap-4">
+                                    <form method="POST" action="{{ route('admin.litiges.close', $selectedLitige->id_ticket) }}" class="flex flex-col h-full justify-center">
                                         @csrf
-                                        <div>
-                                            <label class="block text-sm font-bold text-slate-700 mb-2">Décision ou Message :</label>
-                                            <textarea name="decision" required placeholder="Ex: Après vérification, le commentaire a été supprimé pour non-respect des règles. Le litige est clos." 
-                                                      class="w-full border-slate-300 rounded-lg text-sm focus:ring-slate-800 focus:border-slate-800 min-h-[140px] p-4 shadow-sm"></textarea>
-                                        </div>
+                                        <input type="hidden" name="decision" value="L'administrateur a pris en charge et clôturé ce litige à la suite de la vérification de la demande.">
                                         
-                                        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3.5 rounded-lg transition-colors text-base shadow-sm mt-4">
+                                        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-lg transition-colors text-base shadow-sm">
                                             Clôturer le Litige
                                         </button>
                                     </form>
