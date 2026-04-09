@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use App\Models\Reservations\Reservation;
 use App\Models\Utilisateurs\User;
 use App\Models\Annonces\Annonce;
+use App\Models\Administration\TicketLitige;
+use App\Enums\TicketLitigeStatut;
+use Illuminate\Support\Facades\DB;
 
 class Evaluation extends Model
 {
@@ -56,6 +59,152 @@ class Evaluation extends Model
     public function annonce()
     {
         return $this->belongsTo(Annonce::class, 'id_annonce', 'id_annonce');
+    }
+
+    public function details()
+    {
+        return $this->hasOne(NoteDetaillee::class, 'id_evaluation', 'id_evaluation');
+    }
+
+    // UML Methods pour Voyageur & Hote
+    
+    public static function creer($idAuteur, $idCible, $idReservation, $idAnnonce, $commentaire, $notesDetaillees)
+    {
+        // On récupère la réservation pour valider l'état
+        $reservation = Reservation::find($idReservation);
+        if (!$reservation || $reservation->statut->value !== 'Terminée') {
+            throw new \Exception("Impossible d'évaluer une réservation non terminée.");
+        }
+
+        DB::beginTransaction();
+        try {
+            // Moyenne calculée
+            $moyenne = collect($notesDetaillees)->average();
+
+            $evaluation = self::create([
+                'id_auteur' => $idAuteur,
+                'id_cible' => $idCible,
+                'id_reservation' => $idReservation,
+                'id_annonce' => $idAnnonce,
+                'note' => $moyenne,
+                'commentaire' => $commentaire,
+                'est_signale' => false,
+            ]);
+
+            // Insertion dans NoteDetaillee
+            $evaluation->details()->create([
+                'proprete' => $notesDetaillees['proprete'],
+                'communication' => $notesDetaillees['communication'],
+                'emplacement' => $notesDetaillees['emplacement'],
+                'rapport_qualite_prix' => $notesDetaillees['rapport_qualite_prix'],
+                'exactitude' => $notesDetaillees['exactitude'],
+            ]);
+
+            // Appel au recalcul de la note globale de l'annonce si applicable
+            if ($idAnnonce) {
+                $annonce = Annonce::find($idAnnonce);
+                if ($annonce) {
+                    $annonce->calculerNoteGlobale();
+                }
+            }
+
+            DB::commit();
+            return $evaluation;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function modifier($nouveauCommentaire, $nouvellesNotes)
+    {
+        DB::beginTransaction();
+        try {
+            $moyenne = collect($nouvellesNotes)->average();
+            
+            $this->update([
+                'note' => $moyenne,
+                'commentaire' => $nouveauCommentaire,
+                'date_modification' => now()
+            ]);
+
+            $this->details()->update([
+                'proprete' => $nouvellesNotes['proprete'],
+                'communication' => $nouvellesNotes['communication'],
+                'emplacement' => $nouvellesNotes['emplacement'],
+                'rapport_qualite_prix' => $nouvellesNotes['rapport_qualite_prix'],
+                'exactitude' => $nouvellesNotes['exactitude'],
+            ]);
+
+            // Re-calculer note globale de l'annonce
+            if ($this->id_annonce) {
+                $annonce = Annonce::find($this->id_annonce);
+                if ($annonce) {
+                    $annonce->calculerNoteGlobale();
+                }
+            }
+            DB::commit();
+            return $this;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function supprimer()
+    {
+        $idAnnonce = $this->id_annonce;
+        
+        // Supprimer supprime en cascade les notes détaillées via FK schema "onDelete('cascade')"
+        $this->delete();
+
+        if ($idAnnonce) {
+            $annonce = Annonce::find($idAnnonce);
+            if ($annonce) {
+                $annonce->calculerNoteGlobale();
+            }
+        }
+    }
+
+    // Récupérer les évaluations reçues par un utilisateur (ex: moi)
+    public static function listerEvaluation($idCible)
+    {
+        return self::with(['auteur', 'details', 'annonce'])
+                   ->where('id_cible', $idCible)
+                   ->latest('date_creation')
+                   ->paginate(10);
+    }
+
+    // Récupérer les évaluations données/laissées par un utilisateur
+    public static function getEvaluations($idAuteur)
+    {
+        return self::with(['cible', 'details', 'annonce', 'reservation'])
+                   ->where('id_auteur', $idAuteur)
+                   ->latest('date_creation')
+                   ->paginate(10);
+    }
+    
+    // Signaler une évaluation reçue
+    public function signalerEvaluation($motif)
+    {
+        $this->update([
+            'est_signale' => true,
+            'motif_signalement' => $motif
+        ]);
+        
+        return $this;
+    }
+
+    // Génère le ticket après un signalement
+    public function genererTicket($idDeclarant, $motif)
+    {
+        return TicketLitige::create([
+            'id_evaluation' => $this->id_evaluation,
+            'id_declarant' => $idDeclarant,
+            'id_admin' => null, // Non assigné initialement
+            'motif' => $motif,
+            'statut' => TicketLitigeStatut::EN_COURS,
+        ]);
     }
 
     // UML Methods pour "Avis Signalés"

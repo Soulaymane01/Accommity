@@ -61,6 +61,13 @@ Route::middleware('auth')->group(function () {
     // Notifications
     Route::get('/notifications', [\App\Http\Controllers\Notifications\NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{notification}/read', [\App\Http\Controllers\Notifications\NotificationController::class, 'markAsRead'])->name('notifications.read');
+
+    // Évaluations - Voyageur
+    Route::get('/voyageur/evaluations', [\App\Http\Controllers\Utilisateurs\VoyageurEvaluationController::class, 'index'])->name('voyageur.evaluations.index');
+    Route::post('/voyageur/evaluations', [\App\Http\Controllers\Utilisateurs\VoyageurEvaluationController::class, 'store'])->name('voyageur.evaluations.store');
+    Route::put('/voyageur/evaluations/{id}', [\App\Http\Controllers\Utilisateurs\VoyageurEvaluationController::class, 'update'])->name('voyageur.evaluations.update');
+    Route::delete('/voyageur/evaluations/{id}', [\App\Http\Controllers\Utilisateurs\VoyageurEvaluationController::class, 'destroy'])->name('voyageur.evaluations.destroy');
+    Route::post('/voyageur/evaluations/{id}/signaler', [\App\Http\Controllers\Utilisateurs\VoyageurEvaluationController::class, 'signaler'])->name('voyageur.evaluations.signaler');
 });
 
 // Public Annonces

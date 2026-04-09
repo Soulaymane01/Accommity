@@ -73,8 +73,7 @@ class Annonce extends Model
 
     public function evaluations()
     {
-        // Supposing PK_Evaluations Evaluation model exists
-        return $this->hasMany(\App\Models\Evaluations\Evaluation::class, 'id_cible', 'id_annonce');
+        return $this->hasMany(\App\Models\Evaluations\Evaluation::class, 'id_annonce', 'id_annonce');
     }
 
     // UML Methods (Logic is generally in Services, placing delegate stubs here as per diagram)
@@ -126,7 +125,14 @@ class Annonce extends Model
     
     public function calculerNoteGlobale() 
     {
-        // UML RG30 logic mock
-        return 4.5;
+        // Calcule la moyenne de l'attribut `note` de toutes les évaluations liées
+        $avg = $this->evaluations()->avg('note');
+        
+        // Si la note devient strictement inférieure à 3.0 (et qu'on a bien au moins 1 évaluation), on suspend
+        if ($avg !== null && $avg < 3.0) {
+            $this->suspendre();
+        }
+        
+        return $avg ?? 0.0;
     }
 }
