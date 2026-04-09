@@ -67,7 +67,7 @@
                         <div class="flex items-center">
                             <div class="h-10 w-10 flex-shrink-0 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold uppercase overflow-hidden">
                                 @if($u->profil && $u->profil->photo_url)
-                                    <img src="{{ asset('storage/' . $u->profil->photo_url) }}" class="h-full w-full object-cover">
+                                    <img src="{{ asset($u->profil->photo_url) }}" class="h-full w-full object-cover">
                                 @else
                                     {{ substr($u->prenom, 0, 1) }}{{ substr($u->nom, 0, 1) }}
                                 @endif
@@ -171,7 +171,7 @@
                     <div class="flex items-center gap-5">
                         <div class="h-20 w-20 rounded-full border-2 border-slate-100 bg-slate-50 overflow-hidden flex items-center justify-center flex-shrink-0 text-3xl font-bold text-slate-400">
                             @if($selectedUser->profil && $selectedUser->profil->photo_url)
-                                <img src="{{ asset('storage/' . $selectedUser->profil->photo_url) }}" class="h-full w-full object-cover">
+                                <img src="{{ asset($selectedUser->profil->photo_url) }}" class="h-full w-full object-cover">
                             @else
                                 {{ substr($selectedUser->prenom, 0, 1) }}{{ substr($selectedUser->nom, 0, 1) }}
                             @endif
@@ -247,7 +247,7 @@
 
                             <!-- Viewer de document -->
                             <div class="bg-slate-100 rounded-lg overflow-hidden flex justify-center items-center mb-6 border border-slate-200 min-h-[300px] p-2">
-                                <img src="{{ asset('storage/' . $dossier->chemin_document) }}" alt="Pièce d'identité" class="max-w-full max-h-[400px] object-contain rounded">
+                                <img src="{{ asset($dossier->chemin_document) }}" alt="Pièce d'identité" class="max-w-full max-h-[400px] object-contain rounded">
                             </div>
 
                             <!-- Actions Admin (uniquement si En Cours) -->

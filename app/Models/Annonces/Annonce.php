@@ -87,20 +87,38 @@ class Annonce extends Model
     public function modifierModeReservation() {}
     public function mettreAJourCategorie() {}
     public function mettreAJourPolitique() {}
+    
     public function desactiverAnnonce() {
         $this->statut = StatutAnnonce::DESACTIVE;
         $this->save();
     }
+    
     public function rechercherAnnonces() {}
-    public function setStatusAnnonce($statut) {
+    
+    public function setStatutAnnonce($statut) {
         $this->statut = $statut;
         $this->save();
     }
-    public function getAnnonces() {}
-    public function getAnnoncesById() {}
-    public function filtrerAnnonces($statut) {}
+    
+    public static function getAnnonces() {
+        return self::with('hote')->latest('date_creation')->paginate(10);
+    }
+    
+    public static function getAnnonceById($idAnnonce) {
+        return self::with('hote')->where('id_annonce', $idAnnonce)->first();
+    }
+    
+    public static function filtrerAnnonces($statut) {
+        if ($statut && $statut !== 'tous') {
+            $enumVal = \App\Enums\StatutAnnonce::tryFrom($statut);
+            return self::with('hote')->where('statut', $enumVal ?? $statut)->latest('date_creation')->paginate(10);
+        }
+        return self::getAnnonces();
+    }
+    
     public function getAnnoncesParHote() {}
     public function getAnnoncesDisponibles() {}
+    
     public function suspendre() {
         $this->statut = StatutAnnonce::SUSPENDU;
         $this->save();

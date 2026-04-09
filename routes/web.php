@@ -90,7 +90,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/utilisateurs/{id}', [\App\Http\Controllers\Admin\AdminUserController::class, 'destroy'])->name('utilisateurs.destroy');
         Route::post('/utilisateurs/verify/{id}', [\App\Http\Controllers\Admin\AdminUserController::class, 'validateIdentity'])->name('utilisateurs.verify');
         Route::post('/utilisateurs/reject/{id}', [\App\Http\Controllers\Admin\AdminUserController::class, 'rejectIdentity'])->name('utilisateurs.reject');
-        Route::view('/annonces', 'admin.annonces.index')->name('annonces.index');
+        
+        // Annonces
+        Route::get('/annonces', [\App\Http\Controllers\Admin\AdminAnnonceController::class, 'index'])->name('annonces.index');
+        Route::post('/annonces/publish/{id}', [\App\Http\Controllers\Admin\AdminAnnonceController::class, 'publish'])->name('annonces.publish');
+        Route::post('/annonces/suspend/{id}', [\App\Http\Controllers\Admin\AdminAnnonceController::class, 'suspend'])->name('annonces.suspend');
+        Route::post('/annonces/reject/{id}', [\App\Http\Controllers\Admin\AdminAnnonceController::class, 'reject'])->name('annonces.reject');
         Route::view('/reservations', 'admin.reservations.index')->name('reservations.index');
         Route::view('/avis-signales', 'admin.avis_signales.index')->name('avis_signales.index');
         Route::view('/litiges', 'admin.litiges.index')->name('litiges.index');
