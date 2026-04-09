@@ -23,11 +23,12 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', function() {
         if (auth()->user()->getRoleUtilisateur() === 'hote') {
-            return redirect()->route('hote.annonces.index');
+            return redirect()->route('hote.dashboard');
         }
         return redirect()->route('voyageur.dashboard');
     })->name('dashboard');
 
+    Route::get('/hote/dashboard', [\App\Http\Controllers\Utilisateurs\HoteController::class, 'dashboard'])->name('hote.dashboard');
     Route::get('/voyageur/dashboard', [\App\Http\Controllers\Utilisateurs\VoyageurController::class, 'dashboard'])->name('voyageur.dashboard');
     Route::get('/verification-identite', [AuthController::class, 'verificationNotice'])->name('verification.notice');
     Route::post('/verification-identite', [AuthController::class, 'submitVerification'])->name('verification.submit');
@@ -53,6 +54,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/mes-voyages', [\App\Http\Controllers\Reservations\ReservationController::class, 'mesVoyages'])->name('voyageur.reservations.index');
     Route::post('/reservations/{id}/cancel', [\App\Http\Controllers\Reservations\ReservationController::class, 'cancel'])->name('reservations.cancel');
     Route::get('/reservations/{id}/annuler-apercu', [\App\Http\Controllers\Reservations\ReservationController::class, 'apercuAnnulation'])->name('reservations.cancel.preview');
+    Route::get('/reservations/{id}/payer', [\App\Http\Controllers\Reservations\ReservationController::class, 'showPayment'])->name('reservations.payment');
+    Route::post('/reservations/{id}/payer', [\App\Http\Controllers\Reservations\ReservationController::class, 'processPayment'])->name('reservations.payment.process');
 
     // Réservations - Hôte
     Route::get('/hote/reservations', [\App\Http\Controllers\Reservations\ReservationController::class, 'demandes'])->name('hote.reservations.demandes');

@@ -55,7 +55,7 @@ class ReservationController
 
         $dates = [
             'dateArrivee' => $request->date_arrivee,
-            'dateDepart' => $request->date_depart
+            'dateDepart'  => $request->date_depart
         ];
 
         try {
@@ -66,12 +66,56 @@ class ReservationController
                 $request->message_optionnel
             );
 
-            if ($reservation->statut->value === 'Confirmée') {
-                return redirect()->route('voyageur.reservations.index')->with('success_dialog', 'Votre réservation instantanée a été confirmée !');
+            // Both modes go through the payment page.
+            // The outcome (Confirmée vs En attente) is decided AFTER payment.
+            return redirect()->route('reservations.payment', $reservation->id_reservation);
+
+        } catch (\Exception $e) {
+            return back()->with('error_dialog', $e->getMessage());
+        }
+    }
+
+    /**
+     * Show the payment page for a pending reservation.
+     */
+    public function showPayment($id)
+    {
+        $reservation = $this->repository->findById($id);
+        $this->authorize('pay', $reservation);
+
+        // Load the annonce for display
+        $reservation->load(['annonce', 'hote']);
+
+        return view('voyageur.reservations.payment', compact('reservation'));
+    }
+
+    /**
+     * Process the payment and confirm the reservation.
+     */
+    public function processPayment(Request $request, $id)
+    {
+        $reservation = $this->repository->findById($id);
+        $this->authorize('pay', $reservation);
+
+        $request->validate([
+            'methode_paiement' => 'required|in:carte_bancaire,paypal',
+        ]);
+
+        try {
+            if ($reservation->mode_reservation === \App\Enums\ModeReservation::INSTANTANEE) {
+                // Instant booking: confirm and pay NOW
+                $this->reservationService->confirmerEtPayer($id, $request->methode_paiement);
+
+                return redirect()->route('voyageur.reservations.index')
+                    ->with('success_dialog', 'Paiement effectué ! Votre réservation est confirmée. 🎉');
+            } else {
+                // Demande: record payment but keep reservation EN_ATTENTE
+                // The host still needs to accept/refuse before it's confirmed
+                $this->reservationService->enregistrerPaiementDemande($id, $request->methode_paiement);
+
+                return redirect()->route('voyageur.reservations.index')
+                    ->with('success_dialog', 'Paiement enregistré ! Votre demande a été envoyée à l\'hôte. Vous serez notifié(e) dès qu\'il aura répondu. 📬');
             }
-            
-            return redirect()->route('voyageur.reservations.index')->with('success_dialog', 'Demande de réservation envoyée à l\'hôte.');
-            
         } catch (\Exception $e) {
             return back()->with('error_dialog', $e->getMessage());
         }
