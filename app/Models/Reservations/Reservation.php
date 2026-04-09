@@ -119,4 +119,21 @@ class Reservation extends Model
     {
         return $this->statut;
     }
+
+    public static function getReservations()
+    {
+        return self::with(['annonce', 'voyageur', 'hote'])->latest('date_creation')->paginate(10);
+    }
+
+    public static function filtrerReservations($statut)
+    {
+        if ($statut && $statut !== 'tous') {
+            $enumVal = \App\Enums\StatutReservation::tryFrom($statut);
+            return self::with(['annonce', 'voyageur', 'hote'])
+                ->where('statut', $enumVal ?? $statut)
+                ->latest('date_creation')
+                ->paginate(10);
+        }
+        return self::getReservations();
+    }
 }

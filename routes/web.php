@@ -96,7 +96,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/annonces/publish/{id}', [\App\Http\Controllers\Admin\AdminAnnonceController::class, 'publish'])->name('annonces.publish');
         Route::post('/annonces/suspend/{id}', [\App\Http\Controllers\Admin\AdminAnnonceController::class, 'suspend'])->name('annonces.suspend');
         Route::post('/annonces/reject/{id}', [\App\Http\Controllers\Admin\AdminAnnonceController::class, 'reject'])->name('annonces.reject');
-        Route::view('/reservations', 'admin.reservations.index')->name('reservations.index');
+        
+        // Réservations
+        Route::get('/reservations', [\App\Http\Controllers\Admin\AdminReservationController::class, 'index'])->name('reservations.index');
         Route::view('/avis-signales', 'admin.avis_signales.index')->name('avis_signales.index');
         Route::view('/litiges', 'admin.litiges.index')->name('litiges.index');
         
