@@ -99,8 +99,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
         
         // Réservations
         Route::get('/reservations', [\App\Http\Controllers\Admin\AdminReservationController::class, 'index'])->name('reservations.index');
-        Route::view('/avis-signales', 'admin.avis_signales.index')->name('avis_signales.index');
-        Route::view('/litiges', 'admin.litiges.index')->name('litiges.index');
+        
+        // Avis Signalés
+        Route::get('/avis-signales', [\App\Http\Controllers\Admin\AdminAvisController::class, 'index'])->name('avis_signales.index');
+        Route::post('/avis-signales/{id}/delete', [\App\Http\Controllers\Admin\AdminAvisController::class, 'delete'])->name('avis_signales.delete');
+        Route::post('/avis-signales/{id}/keep', [\App\Http\Controllers\Admin\AdminAvisController::class, 'keep'])->name('avis_signales.keep');
+        // Litiges
+        Route::get('/litiges', [\App\Http\Controllers\Admin\AdminLitigeController::class, 'index'])->name('litiges.index');
+        Route::post('/litiges/close/{id}', [\App\Http\Controllers\Admin\AdminLitigeController::class, 'close'])->name('litiges.close');
         
         // Transactions
         Route::prefix('transactions')->name('transactions.')->group(function () {
