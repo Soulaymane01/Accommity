@@ -125,8 +125,8 @@ class Annonce extends Model
     
     public function calculerNoteGlobale() 
     {
-        // Calcule la moyenne de l'attribut `note` de toutes les évaluations liées
-        $avg = $this->evaluations()->avg('note');
+        // Calcule la moyenne de l'attribut `note` de toutes les évaluations liées (uniquement LAISSÉES PAR LES VOYAGEURS)
+        $avg = $this->evaluations()->where('type_auteur', 'voyageur')->avg('note');
         
         // Si la note devient strictement inférieure à 3.0 (et qu'on a bien au moins 1 évaluation), on suspend
         if ($avg !== null && $avg < 3.0) {

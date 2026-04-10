@@ -17,6 +17,16 @@
     <main class="flex-grow max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
         <h1 class="text-3xl font-bold text-slate-900 mb-8">Mes Voyages</h1>
 
+        @if($errors->any())
+            <div class="mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-xl shadow-sm">
+                <ul class="list-disc list-inside text-sm font-medium">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         @if($reservations->isEmpty())
             <div class="bg-white border text-center border-slate-200 rounded-3xl p-12">
                 <h3 class="text-xl font-bold text-slate-900 mb-2">Aucun voyage à venir</h3>

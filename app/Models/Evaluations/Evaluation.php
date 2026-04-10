@@ -68,7 +68,7 @@ class Evaluation extends Model
 
     // UML Methods pour Voyageur & Hote
     
-    public static function creer($idAuteur, $idCible, $idReservation, $idAnnonce, $commentaire, $notesDetaillees)
+    public static function creer($idAuteur, $idCible, $idReservation, $idAnnonce, $typeAuteur, $commentaire, $notesDetaillees)
     {
         // On récupère la réservation pour valider l'état
         $reservation = Reservation::find($idReservation);
@@ -86,18 +86,20 @@ class Evaluation extends Model
                 'id_cible' => $idCible,
                 'id_reservation' => $idReservation,
                 'id_annonce' => $idAnnonce,
+                'type_auteur' => $typeAuteur,
                 'note' => $moyenne,
                 'commentaire' => $commentaire,
                 'est_signale' => false,
+                'date_creation' => now(),
             ]);
 
             // Insertion dans NoteDetaillee
             $evaluation->details()->create([
-                'proprete' => $notesDetaillees['proprete'],
-                'communication' => $notesDetaillees['communication'],
-                'emplacement' => $notesDetaillees['emplacement'],
-                'rapport_qualite_prix' => $notesDetaillees['rapport_qualite_prix'],
-                'exactitude' => $notesDetaillees['exactitude'],
+                'proprete' => $notesDetaillees['proprete'] ?? 5,
+                'communication' => $notesDetaillees['communication'] ?? 5,
+                'emplacement' => $notesDetaillees['emplacement'] ?? 5,
+                'rapport_qualite_prix' => $notesDetaillees['rapport_qualite_prix'] ?? 5,
+                'exactitude' => $notesDetaillees['exactitude'] ?? 5,
             ]);
 
             // Appel au recalcul de la note globale de l'annonce si applicable
@@ -129,11 +131,11 @@ class Evaluation extends Model
             ]);
 
             $this->details()->update([
-                'proprete' => $nouvellesNotes['proprete'],
-                'communication' => $nouvellesNotes['communication'],
-                'emplacement' => $nouvellesNotes['emplacement'],
-                'rapport_qualite_prix' => $nouvellesNotes['rapport_qualite_prix'],
-                'exactitude' => $nouvellesNotes['exactitude'],
+                'proprete' => $nouvellesNotes['proprete'] ?? 5,
+                'communication' => $nouvellesNotes['communication'] ?? 5,
+                'emplacement' => $nouvellesNotes['emplacement'] ?? 5,
+                'rapport_qualite_prix' => $nouvellesNotes['rapport_qualite_prix'] ?? 5,
+                'exactitude' => $nouvellesNotes['exactitude'] ?? 5,
             ]);
 
             // Re-calculer note globale de l'annonce
@@ -204,6 +206,7 @@ class Evaluation extends Model
             'id_admin' => null, // Non assigné initialement
             'motif' => $motif,
             'statut' => TicketLitigeStatut::EN_COURS,
+            'date_creation' => now(),
         ]);
     }
 

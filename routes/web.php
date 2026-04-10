@@ -71,6 +71,13 @@ Route::middleware('auth')->group(function () {
     Route::put('/voyageur/evaluations/{id}', [\App\Http\Controllers\Utilisateurs\VoyageurEvaluationController::class, 'update'])->name('voyageur.evaluations.update');
     Route::delete('/voyageur/evaluations/{id}', [\App\Http\Controllers\Utilisateurs\VoyageurEvaluationController::class, 'destroy'])->name('voyageur.evaluations.destroy');
     Route::post('/voyageur/evaluations/{id}/signaler', [\App\Http\Controllers\Utilisateurs\VoyageurEvaluationController::class, 'signaler'])->name('voyageur.evaluations.signaler');
+
+    // Évaluations - Hôte
+    Route::get('/hote/evaluations', [\App\Http\Controllers\Utilisateurs\HoteEvaluationController::class, 'index'])->name('hote.evaluations.index');
+    Route::post('/hote/evaluations', [\App\Http\Controllers\Utilisateurs\HoteEvaluationController::class, 'store'])->name('hote.evaluations.store');
+    Route::put('/hote/evaluations/{id}', [\App\Http\Controllers\Utilisateurs\HoteEvaluationController::class, 'update'])->name('hote.evaluations.update');
+    Route::delete('/hote/evaluations/{id}', [\App\Http\Controllers\Utilisateurs\HoteEvaluationController::class, 'destroy'])->name('hote.evaluations.destroy');
+    Route::post('/hote/evaluations/{id}/signaler', [\App\Http\Controllers\Utilisateurs\HoteEvaluationController::class, 'signaler'])->name('hote.evaluations.signaler');
 });
 
 // Public Annonces

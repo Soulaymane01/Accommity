@@ -44,9 +44,15 @@
                     </a>
                     
                     @if(auth()->user()->getRoleUtilisateur() !== 'admin')
-                    <a href="{{ route('voyageur.evaluations.index') }}" class="text-slate-600 hover:text-blue-900 font-medium transition-colors px-4 py-2 rounded-md">
-                        Mes Évaluations
-                    </a>
+                        @if(auth()->user()->getRoleUtilisateur() === 'hote')
+                            <a href="{{ route('hote.evaluations.index') }}" class="text-slate-600 hover:text-blue-900 font-medium transition-colors px-4 py-2 rounded-md">
+                                Mes Évaluations
+                            </a>
+                        @else
+                            <a href="{{ route('voyageur.evaluations.index') }}" class="text-slate-600 hover:text-blue-900 font-medium transition-colors px-4 py-2 rounded-md">
+                                Mes Évaluations
+                            </a>
+                        @endif
                     @endif
 
                     <form method="POST" action="{{ route('logout') }}" class="inline">
