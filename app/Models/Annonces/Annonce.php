@@ -133,6 +133,6 @@ class Annonce extends Model
             $this->suspendre();
         }
         
-        return $avg ?? 0.0;
+        return $avg ? round($avg, 1) : 0.0;
     }
 }
