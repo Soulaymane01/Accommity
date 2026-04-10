@@ -47,7 +47,7 @@ class AnnonceService
         }
 
         $data['id_hote'] = $hote->id_utilisateur;
-        $data['statut'] = StatutAnnonce::PUBLIE->value; // RO02: Initialement EN_VERIFICATION (temporairement PUBLIE pour dev)
+        $data['statut'] = StatutAnnonce::EN_VERIFICATION->value; // RO02: Initialement EN_VERIFICATION
         
         $data['date_creation'] = now();
         $data['photo_url'] = collect($data)->get('photo_url', '');
