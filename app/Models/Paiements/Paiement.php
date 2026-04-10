@@ -39,4 +39,32 @@ class Paiement extends Model
     {
         return $this->belongsTo(Reservation::class, 'id_reservation', 'id_reservation');
     }
+
+    public function voyageur()
+    {
+        return $this->belongsTo(\App\Models\Utilisateurs\User::class, 'id_voyageur', 'id_utilisateur');
+    }
+
+    // UML Methods
+    public static function getPaiements()
+    {
+        return self::with(['reservation.annonce', 'voyageur'])->latest('date_transaction')->paginate(15);
+    }
+
+    public static function filtrerPaiement($statut)
+    {
+        if ($statut && $statut !== 'tous') {
+            $enumVal = StatutPaiement::tryFrom($statut);
+            return self::with(['reservation.annonce', 'voyageur'])
+                ->where('statut', $enumVal ?? $statut)
+                ->latest('date_transaction')
+                ->paginate(15);
+        }
+        return self::getPaiements();
+    }
+
+    public static function getPaiementById($id)
+    {
+        return self::with(['reservation.annonce', 'voyageur'])->where('id_paiement', $id)->first();
+    }
 }

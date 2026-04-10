@@ -127,9 +127,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         
         // Transactions
         Route::prefix('transactions')->name('transactions.')->group(function () {
-            Route::view('/paiements', 'admin.transactions.paiements')->name('paiements');
-            Route::view('/versements', 'admin.transactions.versements')->name('versements');
-            Route::view('/remboursements', 'admin.transactions.remboursements')->name('remboursements');
+            Route::get('/paiements', [\App\Http\Controllers\Admin\AdminFinanceController::class, 'paiements'])->name('paiements');
+            Route::get('/versements', [\App\Http\Controllers\Admin\AdminFinanceController::class, 'versements'])->name('versements');
+            Route::get('/remboursements', [\App\Http\Controllers\Admin\AdminFinanceController::class, 'remboursements'])->name('remboursements');
         });
     });
 });

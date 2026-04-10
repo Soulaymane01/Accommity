@@ -43,4 +43,27 @@ class Versement extends Model
     {
         return $this->belongsTo(User::class, 'id_hote', 'id_utilisateur');
     }
+
+    // UML Methods
+    public static function getVersements()
+    {
+        return self::with(['reservation.annonce', 'hote'])->latest('date_versement')->paginate(15);
+    }
+
+    public static function filtrerVersement($statut)
+    {
+        if ($statut && $statut !== 'tous') {
+            $enumVal = StatutVersement::tryFrom($statut);
+            return self::with(['reservation.annonce', 'hote'])
+                ->where('statut', $enumVal ?? $statut)
+                ->latest('date_versement')
+                ->paginate(15);
+        }
+        return self::getVersements();
+    }
+
+    public static function getVersementById($id)
+    {
+        return self::with(['reservation.annonce', 'hote'])->where('id_versement', $id)->first();
+    }
 }
