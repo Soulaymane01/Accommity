@@ -78,7 +78,7 @@
                                 :type="$recommandation->type_logement"
                                 :ville="$recommandation->adresse"
                                 :prix="$recommandation->tarif_nuit"
-                                note="New"
+                                :note="$recommandation->calculerNoteGlobale()"
                             />
                         @endforeach
                     </div>
