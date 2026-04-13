@@ -23,6 +23,16 @@
             </div>
         </div>
 
+        @if($errors->any())
+            <div class="mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-xl shadow-sm">
+                <ul class="list-disc list-inside text-sm font-medium">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         @if($reservations->isEmpty())
             <div class="bg-white border text-center border-slate-200 rounded-3xl p-12 mt-8">
                 <div class="mx-auto h-16 w-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
@@ -106,6 +116,10 @@
                                                     Annuler
                                                 </button>
                                             </form>
+                                        @elseif($reservation->statut->value == 'Terminée')
+                                            <a href="{{ route('hote.reservations.demandes', ['action' => 'evaluate', 'id' => $reservation->id_reservation]) }}" class="text-blue-600 hover:text-blue-700 text-sm font-semibold border border-blue-200 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors inline-block whitespace-nowrap">
+                                                Évaluer locataire
+                                            </a>
                                         @endif
                                     </td>
                                 </tr>
@@ -116,6 +130,70 @@
             </div>
         @endif
     </main>
+
+    {{-- MODAL DE CRÉATION D'ÉVALUATION PAR L'HÔTE --}}
+    @php
+        $action = request('action');
+        $evalResId = request('id');
+        $resForEval = null;
+        if($action === 'evaluate' && $evalResId) {
+            $resForEval = $reservations->firstWhere('id_reservation', $evalResId);
+        }
+    @endphp
+
+    @if($action === 'evaluate' && $resForEval)
+    <div class="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
+        <a href="{{ route('hote.reservations.demandes') }}" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></a>
+        <div class="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-full border-t-8 border-blue-500">
+            <div class="p-6 border-b border-blue-100 flex justify-between items-center bg-blue-50 relative">
+                <h3 class="font-black text-xl text-slate-800">Évaluer le locataire</h3>
+                <a href="{{ route('hote.reservations.demandes') }}" class="text-slate-400 hover:text-slate-600"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></a>
+            </div>
+            
+            <form action="{{ route('hote.evaluations.store') }}" method="POST" class="p-8 overflow-y-auto">
+                @csrf
+                <input type="hidden" name="id_reservation" value="{{ $evalResId }}">
+                
+                <div class="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between">
+                    <div>
+                        <h4 class="font-bold text-blue-900">{{ optional($resForEval->voyageur)->prenom }} {{ optional($resForEval->voyageur)->nom }}</h4>
+                        <p class="text-xs text-blue-700 mt-1">Séjour du {{ \Carbon\Carbon::parse($resForEval->date_arrivee)->format('d M') }} au {{ \Carbon\Carbon::parse($resForEval->date_depart)->format('d M Y') }}</p>
+                    </div>
+                </div>
+
+                <!-- Notes détaillées restreintes -->
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    @php 
+                    $criteres = ['proprete' => 'Respect des lieux (Propreté)', 'communication' => 'Communication'];
+                    @endphp
+
+                    @foreach($criteres as $key => $label)
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">{{ $label }}</label>
+                        <select name="{{ $key }}" class="w-full border border-slate-300 rounded-xl px-4 py-2 text-slate-800 focus:ring-blue-500 focus:border-blue-500 font-medium bg-white">
+                            <option value="5">5 Étoiles (Parfait)</option>
+                            <option value="4">4 Étoiles (Très bien)</option>
+                            <option value="3">3 Étoiles (Correct)</option>
+                            <option value="2">2 Étoiles (Médiocre)</option>
+                            <option value="1">1 Étoile (Mauvais)</option>
+                        </select>
+                    </div>
+                    @endforeach
+                </div>
+
+                <div class="mb-8">
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Commentaire (public)</label>
+                    <textarea name="commentaire" required rows="4" placeholder="Recommanderiez-vous ce voyageur à d'autres hôtes ?" class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea>
+                </div>
+                
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl text-lg shadow-md transition-colors">
+                    Publier l'évaluation
+                </button>
+            </form>
+        </div>
+    </div>
+    @endif
+
 
     <x-footer />
 </body>

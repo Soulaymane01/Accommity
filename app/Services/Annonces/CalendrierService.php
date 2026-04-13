@@ -29,9 +29,9 @@ class CalendrierService
         // On vérifie s'il y a conflit de réservation
         $conflit = Reservation::where('id_annonce', $idAnnonce)
             ->whereIn('statut', ['Confirmée']) // Use enum properly in real case
-            ->where(function($query) use ($dateDebut, $dateFin) {
+            ->where(function ($query) use ($dateDebut, $dateFin) {
                 $query->whereBetween('date_arrivee', [$dateDebut, $dateFin])
-                      ->orWhereBetween('date_depart', [$dateDebut, $dateFin]);
+                    ->orWhereBetween('date_depart', [$dateDebut, $dateFin]);
             })->exists();
 
         if ($conflit) {

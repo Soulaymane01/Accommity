@@ -90,7 +90,14 @@ class AnnonceController
         $this->authorize('update', $annonce);
 
         try {
-            $this->annonceService->modifierInformations($id, $request->validated(), $request->user()->id_utilisateur);
+            $data = $request->validated();
+
+            if ($request->hasFile('photo')) {
+                $path = $request->file('photo')->store('annonces', 'public');
+                $data['photo_url'] = '/storage/' . $path;
+            }
+
+            $this->annonceService->modifierInformations($id, $data, $request->user()->id_utilisateur);
             return redirect()->route('hote.annonces.index')->with('success_dialog', 'Annonce mise à jour avec succès.');
         } catch (\Exception $e) {
             return back()->with('error_dialog', $e->getMessage());

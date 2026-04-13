@@ -25,7 +25,7 @@
             </div>
             @endif
 
-            <form action="{{ route('hote.annonces.update', $annonce->id_annonce) }}" method="POST" class="space-y-8 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+            <form action="{{ route('hote.annonces.update', $annonce->id_annonce) }}" method="POST" enctype="multipart/form-data" class="space-y-8 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
                 @csrf
                 @method('PUT')
                 
@@ -41,8 +41,15 @@
                             <textarea name="description" rows="4" class="mt-2 block w-full rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-4 py-3 border" required>{{ old('description', $annonce->description) }}</textarea>
                         </div>
                         <div>
-                            <label class="block text-sm font-bold text-slate-700">URL de la photo</label>
-                            <input type="url" name="photo_url" value="{{ old('photo_url', $annonce->photo_url) }}" class="mt-2 block w-full rounded-xl border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm px-4 py-3 border">
+                            <label class="block text-sm font-bold text-slate-700">Photo de l'hébergement</label>
+                            @if($annonce->photo_url)
+                                <div class="mt-2 mb-4">
+                                    <p class="text-xs text-slate-500 mb-2">Photo actuelle :</p>
+                                    <img src="{{ $annonce->photo_url }}" class="h-32 w-48 object-cover rounded-xl border border-slate-200 shadow-sm" alt="Aperçu">
+                                </div>
+                            @endif
+                            <input type="file" name="photo" class="mt-2 block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-slate-300 rounded-xl p-1 shadow-sm">
+                            <p class="mt-2 text-xs text-slate-500 italic">Laissez vide pour conserver la photo actuelle.</p>
                         </div>
                     </div>
                 </div>

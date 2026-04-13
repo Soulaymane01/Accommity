@@ -33,4 +33,11 @@ class ReservationPolicy
     {
         return $user->id_utilisateur === $reservation->id_hote;
     }
+
+    public function pay(User $user, Reservation $reservation)
+    {
+        // Only the voyageur who made the reservation can pay
+        return $user->id_utilisateur === $reservation->id_voyageur
+            && in_array($reservation->statut->value, ['En attente']);
+    }
 }

@@ -108,15 +108,23 @@
                                 <td class="px-6 py-5 whitespace-nowrap text-sm font-medium text-slate-900">
                                     {{ number_format($annonce->tarif_nuit, 2, ',', ' ') }} MAD
                                 </td>
-                                <td class="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
-                                    <a href="{{ route('hote.reservations.demandes', ['id_annonce' => $annonce->id_annonce]) }}" class="text-emerald-600 hover:text-emerald-900 mr-4 transition-colors">Demandes</a>
-                                    <a href="{{ route('hote.annonces.edit', $annonce->id_annonce) }}" class="text-blue-600 hover:text-blue-900 mr-4 transition-colors">Modifier</a>
-                                    <form action="{{ route('hote.annonces.destroy', $annonce->id_annonce) }}" method="POST" class="inline-block" onsubmit="return confirm('Désactiver cette annonce ?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-rose-600 hover:text-rose-900 transition-colors">Désactiver</button>
-                                    </form>
-                                </td>
+                                    <td class="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
+                                        @if($annonce->statut->value !== 'Rejeté')
+                                            <a href="{{ route('hote.reservations.demandes', ['id_annonce' => $annonce->id_annonce]) }}" class="text-emerald-600 hover:text-emerald-900 mr-4 transition-colors">Demandes</a>
+                                        @endif
+                                        
+                                        @if($annonce->statut->value !== 'Désactivé' && $annonce->statut->value !== 'Rejeté')
+                                            <a href="{{ route('hote.annonces.edit', $annonce->id_annonce) }}" class="text-blue-600 hover:text-blue-900 mr-4 transition-colors">Modifier</a>
+                                        @endif
+                                        
+                                        @if($annonce->statut->value !== 'Désactivé')
+                                            <form action="{{ route('hote.annonces.destroy', $annonce->id_annonce) }}" method="POST" class="inline-block" onsubmit="return confirm('Confirmez-vous la suppression de cette annonce ? Elle ne sera plus visible par les voyageurs et sera définie comme désactivée.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-rose-600 hover:text-rose-900 transition-colors">Supprimer</button>
+                                            </form>
+                                        @endif
+                                    </td>
                             </tr>
                             @empty
                             <tr>

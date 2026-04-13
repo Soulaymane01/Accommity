@@ -102,6 +102,60 @@ class User extends Authenticatable
         return $verification ? $verification->statut : null;
     }
 
-    // Note: listerEvaluations(), getUtilisateurById(), updateUser(), deleteUser() 
-    // are naturally handled by Eloquent but can be wrapped if strictly needed.
+    // --- METHODES UML: CYCLE INGENIEUR --- //
+
+    public static function getUtilisateurs()
+    {
+        return self::latest('date_creation')->paginate(10);
+    }
+
+    public static function rechercherUtilisateur($critere, $searchQuery = null)
+    {
+        $query = self::query();
+
+        if ($critere === 'hote') {
+            $query->where('est_hote', true);
+        } elseif ($critere === 'voyageur') {
+            $query->where('est_voyageur', true);
+        } elseif ($critere === 'en_attente') {
+            $query->whereHas('verificationIdentite', function($q) {
+                $q->where('statut', \App\Enums\VerificationStatut::EN_COURS);
+            });
+        }
+
+        if ($searchQuery) {
+            $query->where(function($q) use ($searchQuery) {
+                $q->where('nom', 'ilike', '%' . $searchQuery . '%')
+                  ->orWhere('prenom', 'ilike', '%' . $searchQuery . '%')
+                  ->orWhere('email', 'ilike', '%' . $searchQuery . '%');
+            });
+        }
+
+        return $query->latest('date_creation')->paginate(10);
+    }
+
+    public static function getUtilisateurById($idUtilisateur)
+    {
+        return self::with('profil', 'verificationIdentite')->where('id_utilisateur', $idUtilisateur)->first();
+    }
+
+    public function updateUser(array $donnees): void
+    {
+        $this->update($donnees);
+    }
+
+    public function deleteUser(): void
+    {
+        $this->delete();
+    }
+
+    public function mettreAJourStatut(string $statut): void
+    {
+        // Placeholder for future extensibility if User status needed
+    }
+
+    public function verificationIdentite()
+    {
+        return $this->hasOne(\App\Models\Utilisateurs\VerificationIdentite::class, 'id_utilisateur', 'id_utilisateur')->latest('date_soumission');
+    }
 }

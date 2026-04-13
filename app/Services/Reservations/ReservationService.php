@@ -9,22 +9,31 @@ use App\Enums\TypeActeurAnnulation;
 use App\Models\Annonces\Annonce;
 use App\Events\ReservationConfirmee;
 use App\Events\ReservationAnnulee;
+use App\Models\Utilisateurs\User;
+use App\Facades\AppNotification;
+use App\Enums\TypeAlerte;
+use App\Services\Paiements\PaiementService;
+use App\Services\Paiements\RemboursementService;
 use Exception;
-
 class ReservationService
 {
     protected $repository;
     protected $statutService;
     protected $minuterieService;
-
+    protected $paiementService;
+    protected $remboursementService;
     public function __construct(
         ReservationRepositoryInterface $repository,
         StatutService $statutService,
-        MinuterieService $minuterieService
+        MinuterieService $minuterieService,
+        PaiementService $paiementService,
+        RemboursementService $remboursementService
     ) {
         $this->repository = $repository;
         $this->statutService = $statutService;
         $this->minuterieService = $minuterieService;
+        $this->paiementService = $paiementService;
+        $this->remboursementService = $remboursementService;
     }
 
     public function soumettreDemande(string $idAnnonce, array $dates, int $nbVoy, ?string $message): Reservation
@@ -78,10 +87,18 @@ class ReservationService
 
         $reservation = $this->repository->create($data);
 
-        if ($mode === ModeReservation::INSTANTANEE) {
-            $this->confirmerEtPayer($reservation->id_reservation, 'default_payment');
-        } else {
+        // Payment is now handled on the dedicated payment page.
+        // For DEMANDE mode: start the 24h timer so the host can accept/refuse.
+        if ($mode === ModeReservation::DEMANDE) {
             $this->minuterieService->demarrerMinuterie24h($reservation->id_reservation);
+        }
+
+        $hote = User::find($annonce->id_hote);
+        if ($hote) {
+            $msg = $mode === ModeReservation::INSTANTANEE 
+                ? "Nouvelle réservation instantanée ! Un voyageur vient de réserver votre logement." 
+                : "Nouvelle demande de réservation pour votre logement. Veuillez l'accepter ou la refuser dans les 24h.";
+            AppNotification::creerNotification($hote, 'Nouvelle Réservation 🏡', $msg, TypeAlerte::Reservation);
         }
 
         return $reservation;
@@ -116,18 +133,59 @@ class ReservationService
         $this->statutService->appliquerTransition($reservation, \App\Enums\StatutReservation::CONFIRMEE);
         $this->minuterieService->annulerMinuterie($idReservation);
 
+        $voyageur = User::find($reservation->id_voyageur);
+        if ($voyageur) {
+            AppNotification::creerNotification($voyageur, 'Demande Acceptée ! 🎉', "L'hôte a accepté votre demande de réservation.", TypeAlerte::Reservation);
+        }
+
         // Notify user about payment and trigger dispatching event
         event(new ReservationConfirmee($reservation));
     }
 
-    public function confirmerEtPayer(string $idReservation, string $moyenPaiement): void
+    public function confirmerEtPayer(string $idReservation, string $moyenPaiement = 'carte_bancaire'): void
     {
         $reservation = $this->repository->findById($idReservation);
         
-        // PK_PAIEMENTS STUB: Execute payment integration logic here
+        // PK_PAIEMENTS Integration: Execute payment
+        $this->paiementService->effectuerPaiement($reservation, $reservation->montant_total, $moyenPaiement);
         
         $this->statutService->appliquerTransition($reservation, \App\Enums\StatutReservation::CONFIRMEE);
         event(new ReservationConfirmee($reservation));
+    }
+
+    /**
+     * For DEMANDE reservations: record the payment but keep the reservation EN_ATTENTE.
+     * The host still needs to accept it before it becomes confirmed.
+     */
+    public function enregistrerPaiementDemande(string $idReservation, string $moyenPaiement = 'carte_bancaire'): void
+    {
+        $reservation = $this->repository->findById($idReservation);
+
+        // Record the payment (money is held)
+        $this->paiementService->effectuerPaiement($reservation, $reservation->montant_total, $moyenPaiement);
+
+        // Keep status as EN_ATTENTE — the host must now accept or refuse
+        // Notify host that a funded request has arrived
+        $hote = \App\Models\Utilisateurs\User::find($reservation->id_hote);
+        if ($hote) {
+            AppNotification::creerNotification(
+                $hote,
+                'Nouvelle demande avec paiement 💳',
+                'Un voyageur a payé et attend votre approbation pour réserver votre logement. Acceptez ou refusez dans les 24h.',
+                TypeAlerte::Reservation
+            );
+        }
+
+        // Notify the voyageur that their request is pending
+        $voyageur = \App\Models\Utilisateurs\User::find($reservation->id_voyageur);
+        if ($voyageur) {
+            AppNotification::creerNotification(
+                $voyageur,
+                'Demande envoyée 📬',
+                'Votre paiement a été enregistré. Votre demande est en attente d\'approbation de l\'hôte.',
+                TypeAlerte::Reservation
+            );
+        }
     }
 
     public function refuserDemande(string $idReservation, ?string $motif = null): void
@@ -136,6 +194,17 @@ class ReservationService
         $reservation->update(['motif_refus' => $motif]);
         $this->statutService->appliquerTransition($reservation, \App\Enums\StatutReservation::REFUSEE);
         $this->minuterieService->annulerMinuterie($idReservation);
+        
+
+        // If the demande was funded, trigger refund
+        if ($reservation->paiement) {
+            $this->remboursementService->traiterAnnulation($reservation, TypeActeurAnnulation::HOTE, $reservation->montant_total, 'Demande refusée');
+        }
+
+        $voyageur = User::find($reservation->id_voyageur);
+        if ($voyageur) {
+            AppNotification::creerNotification($voyageur, 'Demande Refusée', "L'hôte a malheureusement dû refuser votre demande de réservation.", TypeAlerte::Systeme);
+        }
     }
 
     public function annulerReservation(string $idReservation, TypeActeurAnnulation $acteur): void
@@ -147,8 +216,9 @@ class ReservationService
             throw new Exception("Cette réservation ne peut plus être annulée.");
         }
 
-        // 2. Traitement des remboursements (PK_PAIEMENTS STUB)
+        // 2. Traitement des remboursements (PK_PAIEMENTS Integration)
         $apercu = $this->calculerApercuAnnulation($idReservation);
+        $this->remboursementService->traiterAnnulation($reservation, $acteur, $apercu['montant_remboursement'], $apercu['message']);
         
         // 3. Mise à jour du statut
         $this->statutService->appliquerTransition($reservation, \App\Enums\StatutReservation::ANNULEE);
@@ -156,7 +226,16 @@ class ReservationService
         $this->minuterieService->annulerMinuterie($idReservation);
         
         // 4. Débloquer le calendrier (PK_ANNONCES Integration)
-        // La recherche exclut déjà les 'Annulée', donc c'est automatique.
+        // La recherche exclut déjà les 'Annulée', donc c'est automatique via getDatesOccupees().
+        
+        $voyageur = User::find($reservation->id_voyageur);
+        $hote = User::find($reservation->id_hote);
+        
+        if ($acteur === TypeActeurAnnulation::VOYAGEUR && $hote) {
+            AppNotification::creerNotification($hote, 'Réservation Annulée', "Le voyageur a annulé sa réservation.", TypeAlerte::Systeme);
+        } elseif ($acteur === TypeActeurAnnulation::HOTE && $voyageur) {
+            AppNotification::creerNotification($voyageur, 'Réservation Annulée', "L'hôte a annulé votre réservation.", TypeAlerte::Systeme);
+        }
         
         event(new ReservationAnnulee($reservation));
     }
@@ -212,6 +291,11 @@ class ReservationService
         if ($reservation && $reservation->statut === \App\Enums\StatutReservation::EN_ATTENTE) {
             $this->statutService->appliquerTransition($reservation, \App\Enums\StatutReservation::EXPIREE);
             $this->minuterieService->annulerMinuterie($idReservation);
+            
+            $voyageur = User::find($reservation->id_voyageur);
+            if ($voyageur) {
+                AppNotification::creerNotification($voyageur, 'Demande Expirée', "L'hôte n'a pas répondu à temps. Votre demande de réservation a expiré.", TypeAlerte::Systeme);
+            }
         }
     }
 

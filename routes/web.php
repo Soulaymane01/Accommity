@@ -23,11 +23,12 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', function() {
         if (auth()->user()->getRoleUtilisateur() === 'hote') {
-            return redirect()->route('hote.annonces.index');
+            return redirect()->route('hote.dashboard');
         }
         return redirect()->route('voyageur.dashboard');
     })->name('dashboard');
 
+    Route::get('/hote/dashboard', [\App\Http\Controllers\Utilisateurs\HoteController::class, 'dashboard'])->name('hote.dashboard');
     Route::get('/voyageur/dashboard', [\App\Http\Controllers\Utilisateurs\VoyageurController::class, 'dashboard'])->name('voyageur.dashboard');
     Route::get('/verification-identite', [AuthController::class, 'verificationNotice'])->name('verification.notice');
     Route::post('/verification-identite', [AuthController::class, 'submitVerification'])->name('verification.submit');
@@ -53,6 +54,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/mes-voyages', [\App\Http\Controllers\Reservations\ReservationController::class, 'mesVoyages'])->name('voyageur.reservations.index');
     Route::post('/reservations/{id}/cancel', [\App\Http\Controllers\Reservations\ReservationController::class, 'cancel'])->name('reservations.cancel');
     Route::get('/reservations/{id}/annuler-apercu', [\App\Http\Controllers\Reservations\ReservationController::class, 'apercuAnnulation'])->name('reservations.cancel.preview');
+    Route::get('/reservations/{id}/payer', [\App\Http\Controllers\Reservations\ReservationController::class, 'showPayment'])->name('reservations.payment');
+    Route::post('/reservations/{id}/payer', [\App\Http\Controllers\Reservations\ReservationController::class, 'processPayment'])->name('reservations.payment.process');
 
     // Réservations - Hôte
     Route::get('/hote/reservations', [\App\Http\Controllers\Reservations\ReservationController::class, 'demandes'])->name('hote.reservations.demandes');
@@ -61,6 +64,20 @@ Route::middleware('auth')->group(function () {
     // Notifications
     Route::get('/notifications', [\App\Http\Controllers\Notifications\NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{notification}/read', [\App\Http\Controllers\Notifications\NotificationController::class, 'markAsRead'])->name('notifications.read');
+
+    // Évaluations - Voyageur
+    Route::get('/voyageur/evaluations', [\App\Http\Controllers\Utilisateurs\VoyageurEvaluationController::class, 'index'])->name('voyageur.evaluations.index');
+    Route::post('/voyageur/evaluations', [\App\Http\Controllers\Utilisateurs\VoyageurEvaluationController::class, 'store'])->name('voyageur.evaluations.store');
+    Route::put('/voyageur/evaluations/{id}', [\App\Http\Controllers\Utilisateurs\VoyageurEvaluationController::class, 'update'])->name('voyageur.evaluations.update');
+    Route::delete('/voyageur/evaluations/{id}', [\App\Http\Controllers\Utilisateurs\VoyageurEvaluationController::class, 'destroy'])->name('voyageur.evaluations.destroy');
+    Route::post('/voyageur/evaluations/{id}/signaler', [\App\Http\Controllers\Utilisateurs\VoyageurEvaluationController::class, 'signaler'])->name('voyageur.evaluations.signaler');
+
+    // Évaluations - Hôte
+    Route::get('/hote/evaluations', [\App\Http\Controllers\Utilisateurs\HoteEvaluationController::class, 'index'])->name('hote.evaluations.index');
+    Route::post('/hote/evaluations', [\App\Http\Controllers\Utilisateurs\HoteEvaluationController::class, 'store'])->name('hote.evaluations.store');
+    Route::put('/hote/evaluations/{id}', [\App\Http\Controllers\Utilisateurs\HoteEvaluationController::class, 'update'])->name('hote.evaluations.update');
+    Route::delete('/hote/evaluations/{id}', [\App\Http\Controllers\Utilisateurs\HoteEvaluationController::class, 'destroy'])->name('hote.evaluations.destroy');
+    Route::post('/hote/evaluations/{id}/signaler', [\App\Http\Controllers\Utilisateurs\HoteEvaluationController::class, 'signaler'])->name('hote.evaluations.signaler');
 });
 
 // Public Annonces
@@ -84,18 +101,35 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Dashboard Stats
         Route::get('/dashboard', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'index'])->name('dashboard');
 
-        // Emplacements vides (Views placeholders)
-        Route::view('/utilisateurs', 'admin.utilisateurs.index')->name('utilisateurs.index');
-        Route::view('/annonces', 'admin.annonces.index')->name('annonces.index');
-        Route::view('/reservations', 'admin.reservations.index')->name('reservations.index');
-        Route::view('/avis-signales', 'admin.avis_signales.index')->name('avis_signales.index');
-        Route::view('/litiges', 'admin.litiges.index')->name('litiges.index');
+        // Utilisateurs
+        Route::get('/utilisateurs', [\App\Http\Controllers\Admin\AdminUserController::class, 'index'])->name('utilisateurs.index');
+        Route::put('/utilisateurs/{id}', [\App\Http\Controllers\Admin\AdminUserController::class, 'update'])->name('utilisateurs.update');
+        Route::delete('/utilisateurs/{id}', [\App\Http\Controllers\Admin\AdminUserController::class, 'destroy'])->name('utilisateurs.destroy');
+        Route::post('/utilisateurs/verify/{id}', [\App\Http\Controllers\Admin\AdminUserController::class, 'validateIdentity'])->name('utilisateurs.verify');
+        Route::post('/utilisateurs/reject/{id}', [\App\Http\Controllers\Admin\AdminUserController::class, 'rejectIdentity'])->name('utilisateurs.reject');
+        
+        // Annonces
+        Route::get('/annonces', [\App\Http\Controllers\Admin\AdminAnnonceController::class, 'index'])->name('annonces.index');
+        Route::post('/annonces/publish/{id}', [\App\Http\Controllers\Admin\AdminAnnonceController::class, 'publish'])->name('annonces.publish');
+        Route::post('/annonces/suspend/{id}', [\App\Http\Controllers\Admin\AdminAnnonceController::class, 'suspend'])->name('annonces.suspend');
+        Route::post('/annonces/reject/{id}', [\App\Http\Controllers\Admin\AdminAnnonceController::class, 'reject'])->name('annonces.reject');
+        
+        // Réservations
+        Route::get('/reservations', [\App\Http\Controllers\Admin\AdminReservationController::class, 'index'])->name('reservations.index');
+        
+        // Avis Signalés
+        Route::get('/avis-signales', [\App\Http\Controllers\Admin\AdminAvisController::class, 'index'])->name('avis_signales.index');
+        Route::post('/avis-signales/{id}/delete', [\App\Http\Controllers\Admin\AdminAvisController::class, 'delete'])->name('avis_signales.delete');
+        Route::post('/avis-signales/{id}/keep', [\App\Http\Controllers\Admin\AdminAvisController::class, 'keep'])->name('avis_signales.keep');
+        // Litiges
+        Route::get('/litiges', [\App\Http\Controllers\Admin\AdminLitigeController::class, 'index'])->name('litiges.index');
+        Route::post('/litiges/close/{id}', [\App\Http\Controllers\Admin\AdminLitigeController::class, 'close'])->name('litiges.close');
         
         // Transactions
         Route::prefix('transactions')->name('transactions.')->group(function () {
-            Route::view('/paiements', 'admin.transactions.paiements')->name('paiements');
-            Route::view('/versements', 'admin.transactions.versements')->name('versements');
-            Route::view('/remboursements', 'admin.transactions.remboursements')->name('remboursements');
+            Route::get('/paiements', [\App\Http\Controllers\Admin\AdminFinanceController::class, 'paiements'])->name('paiements');
+            Route::get('/versements', [\App\Http\Controllers\Admin\AdminFinanceController::class, 'versements'])->name('versements');
+            Route::get('/remboursements', [\App\Http\Controllers\Admin\AdminFinanceController::class, 'remboursements'])->name('remboursements');
         });
     });
 });

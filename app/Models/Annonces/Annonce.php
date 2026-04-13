@@ -73,8 +73,7 @@ class Annonce extends Model
 
     public function evaluations()
     {
-        // Supposing PK_Evaluations Evaluation model exists
-        return $this->hasMany(\App\Models\Evaluations\Evaluation::class, 'id_cible', 'id_annonce');
+        return $this->hasMany(\App\Models\Evaluations\Evaluation::class, 'id_annonce', 'id_annonce');
     }
 
     // UML Methods (Logic is generally in Services, placing delegate stubs here as per diagram)
@@ -87,20 +86,38 @@ class Annonce extends Model
     public function modifierModeReservation() {}
     public function mettreAJourCategorie() {}
     public function mettreAJourPolitique() {}
+    
     public function desactiverAnnonce() {
         $this->statut = StatutAnnonce::DESACTIVE;
         $this->save();
     }
+    
     public function rechercherAnnonces() {}
-    public function setStatusAnnonce($statut) {
+    
+    public function setStatutAnnonce($statut) {
         $this->statut = $statut;
         $this->save();
     }
-    public function getAnnonces() {}
-    public function getAnnoncesById() {}
-    public function filtrerAnnonces($statut) {}
+    
+    public static function getAnnonces() {
+        return self::with('hote')->latest('date_creation')->paginate(10);
+    }
+    
+    public static function getAnnonceById($idAnnonce) {
+        return self::with('hote')->where('id_annonce', $idAnnonce)->first();
+    }
+    
+    public static function filtrerAnnonces($statut) {
+        if ($statut && $statut !== 'tous') {
+            $enumVal = \App\Enums\StatutAnnonce::tryFrom($statut);
+            return self::with('hote')->where('statut', $enumVal ?? $statut)->latest('date_creation')->paginate(10);
+        }
+        return self::getAnnonces();
+    }
+    
     public function getAnnoncesParHote() {}
     public function getAnnoncesDisponibles() {}
+    
     public function suspendre() {
         $this->statut = StatutAnnonce::SUSPENDU;
         $this->save();
@@ -108,7 +125,14 @@ class Annonce extends Model
     
     public function calculerNoteGlobale() 
     {
-        // UML RG30 logic mock
-        return 4.5;
+        // Calcule la moyenne de l'attribut `note` de toutes les évaluations liées (uniquement LAISSÉES PAR LES VOYAGEURS)
+        $avg = $this->evaluations()->where('type_auteur', 'voyageur')->avg('note');
+        
+        // Si la note devient strictement inférieure à 3.0 (et qu'on a bien au moins 1 évaluation), on suspend
+        if ($avg !== null && $avg < 3.0) {
+            $this->suspendre();
+        }
+        
+        return $avg ? round($avg, 1) : 0.0;
     }
 }

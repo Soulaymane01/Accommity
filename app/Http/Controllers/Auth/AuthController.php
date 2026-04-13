@@ -124,8 +124,8 @@ class AuthController
         $user = Auth::user();
         if ($request->hasFile('photo_profil')) {
             $path = $request->file('photo_profil')->store('profiles', 'public');
-            // Utilisation de la méthode UML
-            $user->profil->ajouterPhoto($path);
+            // Utilisation de la méthode UML avec préfixe /storage/
+            $user->profil->ajouterPhoto('/storage/' . $path);
         }
 
         return $this->redirectAfterPhotoStep($user);
@@ -171,11 +171,11 @@ class AuthController
         if ($request->hasFile('document_identite')) {
             $path = $request->file('document_identite')->store('verifications', 'public');
             
-            // Method from UML
+            // Method from UML avec préfixe /storage/
             \App\Models\Utilisateurs\VerificationIdentite::soumettreDocuments(
                 Auth::user()->id_utilisateur, 
                 $request->input('type_piece'),
-                $path
+                '/storage/' . $path
             );
         }
 

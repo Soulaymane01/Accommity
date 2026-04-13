@@ -81,7 +81,7 @@
                         :type="$annonce->type_logement"
                         :ville="$annonce->categorie->ville ?? ($annonce->ville ?? $annonce->adresse)"
                         :prix="$annonce->tarif_nuit"
-                        note="4.8"
+                        :note="$annonce->calculerNoteGlobale()"
                     />
                 @empty
                     <div class="col-span-full py-12 text-center border-2 border-dashed border-slate-200 rounded-3xl">

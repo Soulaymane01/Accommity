@@ -78,11 +78,119 @@
                                 :type="$recommandation->type_logement"
                                 :ville="$recommandation->adresse"
                                 :prix="$recommandation->tarif_nuit"
-                                note="New"
+                                :note="$recommandation->calculerNoteGlobale()"
                             />
                         @endforeach
                     </div>
                 </section>
+
+                <!-- Mes Paiements -->
+                <section>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-6">Mes Paiements</h2>
+                    @if($paiements->isEmpty())
+                        <div class="bg-white border border-slate-200 rounded-2xl p-8 text-center text-slate-500">
+                            Aucun paiement enregistré.
+                        </div>
+                    @else
+                        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                            <table class="w-full text-sm">
+                                <thead class="bg-slate-50 text-slate-400 text-xs uppercase tracking-wider">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left">Annonce</th>
+                                        <th class="px-4 py-3 text-right">Montant</th>
+                                        <th class="px-4 py-3 text-center">Méthode</th>
+                                        <th class="px-4 py-3 text-center">Statut</th>
+                                        <th class="px-4 py-3 text-right">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @foreach($paiements as $paiement)
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-4 py-3 font-medium text-slate-800">
+                                            {{ $paiement->reservation?->annonce?->titre ?? 'N/A' }}
+                                        </td>
+                                        <td class="px-4 py-3 text-right font-bold text-slate-900">
+                                            {{ number_format($paiement->montant, 2) }} DH
+                                        </td>
+                                        <td class="px-4 py-3 text-center text-slate-500 capitalize">
+                                            {{ str_replace('_', ' ', $paiement->methode_paiement instanceof \App\Enums\MethodePaiement ? $paiement->methode_paiement->value : $paiement->methode_paiement) }}
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span @class([
+                                                'px-2 py-0.5 rounded-full text-xs font-bold uppercase',
+                                                'bg-emerald-100 text-emerald-700' => ($paiement->statut->value ?? '') === 'reussi',
+                                                'bg-blue-100 text-blue-700'       => ($paiement->statut->value ?? '') === 'rembourse',
+                                                'bg-amber-100 text-amber-700'     => ($paiement->statut->value ?? '') === 'en_attente',
+                                                'bg-red-100 text-red-700'         => ($paiement->statut->value ?? '') === 'echoue',
+                                            ])>
+                                                {{ match($paiement->statut->value ?? '') {
+                                                    'reussi'     => 'Réussi',
+                                                    'rembourse'  => 'Remboursé',
+                                                    'en_attente' => 'En attente',
+                                                    'echoue'     => 'Échoué',
+                                                    default      => $paiement->statut->value ?? '',
+                                                } }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 text-right text-slate-400 text-xs">
+                                            {{ \Carbon\Carbon::parse($paiement->date_transaction)->format('d M Y') }}
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </section>
+
+                <!-- Mes Remboursements -->
+                <section>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-6">Mes Remboursements</h2>
+                    @if($remboursements->isEmpty())
+                        <div class="bg-white border border-slate-200 rounded-2xl p-8 text-center text-slate-500">
+                            Aucun remboursement enregistré.
+                        </div>
+                    @else
+                        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                            <table class="w-full text-sm">
+                                <thead class="bg-slate-50 text-slate-400 text-xs uppercase tracking-wider">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left">Annonce</th>
+                                        <th class="px-4 py-3 text-right">Montant</th>
+                                        <th class="px-4 py-3 text-center">Motif</th>
+                                        <th class="px-4 py-3 text-right">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @foreach($remboursements as $remb)
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-4 py-3 font-medium text-slate-800">
+                                            {{ $remb->reservation?->annonce?->titre ?? 'N/A' }}
+                                        </td>
+                                        <td class="px-4 py-3 text-right font-bold text-blue-600">
+                                            +{{ number_format($remb->montant, 2) }} DH
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 uppercase">
+                                                {{ match($remb->motif instanceof \App\Enums\MotifRemboursement ? $remb->motif->value : $remb->motif) {
+                                                    'annulation_voyageur' => 'Annulation Voyageur',
+                                                    'annulation_hote'     => 'Annulation Hôte',
+                                                    'expiration_demande'  => 'Demande Expirée',
+                                                    default               => $remb->motif,
+                                                } }}
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 text-right text-slate-400 text-xs">
+                                            {{ \Carbon\Carbon::parse($remb->date_remboursement)->format('d M Y') }}
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </section>
+
             </div>
 
             <!-- Sidebar / Stats -->
@@ -99,15 +207,15 @@
                                 <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Réservations totales</p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-4">
+                        <a href="{{ route('voyageur.evaluations.index') }}" class="flex items-center gap-4 hover:bg-slate-50 p-2 rounded-xl transition-colors -ml-2">
                             <div class="h-10 w-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
                             </div>
                             <div>
-                                <p class="text-2xl font-bold text-slate-900">0</p>
-                                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Avis laisses</p>
+                                <p class="text-2xl font-bold text-slate-900">{{ \App\Models\Evaluations\Evaluation::where('id_auteur', auth()->id())->count() }}</p>
+                                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Avis laissés</p>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
 

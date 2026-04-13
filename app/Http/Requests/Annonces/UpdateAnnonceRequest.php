@@ -19,6 +19,7 @@ class UpdateAnnonceRequest extends FormRequest
             'id_politique' => ['required', 'uuid', 'exists:politique_annulations,id_politique'],
             'titre' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
+            'photo' => ['nullable', 'image', 'max:5120'],
             'photo_url' => ['nullable', 'string'],
             'type_logement' => ['required', 'string'],
             'adresse' => ['required', 'string'],
